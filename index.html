@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>にちかん - 日程調整</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+<!-- ★ Firebase設定をここに貼り付けてください ★ -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set, get, update, onValue, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  // ▼▼▼ あなたのFirebase設定に書き換えてください ▼▼▼
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+    projectId: "YOUR_PROJECT",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+  // ▲▲▲ ここまで ▲▲▲
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  window._db = db;
+  window._dbRef = ref;
+  window._dbSet = set;
+  window._dbGet = get;
+  window._dbUpdate = update;
+  window._dbOnValue = onValue;
+  window._dbPush = push;
+  window.firebaseReady = true;
+  document.dispatchEvent(new Event('firebaseReady'));
+</script>
+
+<style>
+  :root {
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --surface2: #F0EDE6;
+    --border: #E2DDD5;
+    --text: #1A1714;
+    --text2: #6B6560;
+    --accent: #D4521A;
+    --accent2: #E8A87C;
+    --ok: #2E7D32;
+    --maybe: #E65100;
+    --no: #B71C1C;
+    --ok-bg: #E8F5E9;
+    --maybe-bg: #FFF3E0;
+    --no-bg: #FFEBEE;
+    --radius: 16px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  /* ヘッダー */
+  .header {
+    background: var(--text);
+    color: white;
+    padding: 20px 20px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-inner { max-width: 480px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+  .logo { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  .logo span { color: var(--accent2); }
+  .header-sub { font-size: 11px; opacity: 0.5; margin-top: 2px; }
+
+  /* メインコンテンツ */
+  .main { max-width: 480px; margin: 0 auto; padding: 20px 16px; }
+
+  /* カード */
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text2);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .card-title::before {
+    content: '';
+    display: block;
+    width: 3px;
+    height: 14px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  /* 画面切り替え */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ホーム画面 */
+  .home-hero {
+    background: var(--text);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    color: white;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .home-hero::after {
+    content: '📅';
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 48px;
+    opacity: 0.15;
+  }
+  .home-hero h1 { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+  .home-hero p { font-size: 13px; opacity: 0.6; line-height: 1.6; }
+
+  .home-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .home-btn {
+    background: var(--surface);
+    border: none;
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .home-btn:active { transform: scale(0.97); box-shadow: none; }
+  .home-btn-icon { font-size: 28px; margin-bottom: 8px; }
+  .home-btn-label { font-size: 14px; font-weight: 700; color: var(--text); }
+  .home-btn-desc { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  /* 入力フォーム */
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 6px; display: block; }
+  .form-input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-size: 15px;
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+    font-family: inherit;
+  }
+  .form-input:focus { border-color: var(--accent); }
+
+  /* カレンダー */
+  .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .cal-nav-btn {
+    background: var(--surface2);
+    border: none;
+    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cal-month { font-size: 15px; font-weight: 700; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  .cal-dow {
+    text-align: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text2);
+    padding: 4px 0;
+  }
+  .cal-dow:first-child { color: #c0392b; }
+  .cal-dow:last-child { color: #2980b9; }
+  .cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.15s;
+    font-weight: 500;
+  }
+  .cal-day:empty { pointer-events: none; }
+  .cal-day.past { color: #ccc; pointer-events: none; }
+  .cal-day.selected {
+    background: var(--accent);
+    color: white;
+    font-weight: 700;
+  }
+  .cal-day:not(:empty):not(.past):not(.selected):active {
+    background: var(--surface2);
+  }
+  .cal-day.sunday { color: #c0392b; }
+  .cal-day.saturday { color: #2980b9; }
+  .cal-day.selected { color: white !important; }
+
+  /* 選択済み日付タグ */
+  .date-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .date-tag {
+    background: var(--ok-bg);
+    color: var(--ok);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .date-tag-remove { cursor: pointer; opacity: 0.6; font-size: 14px; }
+
+  /* ボタン */
+  .btn {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-secondary { background: var(--surface2); color: var(--text); }
+  .btn-sm {
+    width: auto;
+    padding: 8px 16px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+
+  /* ID表示 */
+  .event-id-display {
+    background: var(--text);
+    color: white;
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .event-id-label { font-size: 11px; opacity: 0.5; margin-bottom: 8px; }
+  .event-id-value { font-size: 40px; font-weight: 900; letter-spacing: 6px; color: var(--accent2); }
+  .event-id-copy {
+    margin-top: 12px;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  /* ID入力（参加者用） */
+  .id-input-big {
+    text-align: center;
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+  }
+
+  /* 回答画面 */
+  .answer-date-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+  }
+  .answer-date-row:last-child { border-bottom: none; }
+  .answer-date-label { flex: 1; font-size: 14px; font-weight: 600; }
+  .answer-date-sub { font-size: 11px; color: var(--text2); margin-top: 1px; }
+  .answer-btns { display: flex; gap: 6px; }
+  .ans-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .ans-btn.active-ok { background: var(--ok-bg); border-color: var(--ok); }
+  .ans-btn.active-maybe { background: var(--maybe-bg); border-color: var(--maybe); }
+  .ans-btn.active-no { background: var(--no-bg); border-color: var(--no); }
+
+  /* 集計表 */
+  .agg-header {
+    display: flex;
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text2);
+  }
+  .agg-row {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    transition: background 0.2s;
+  }
+  .agg-row.best { background: #E8F5E9; }
+  .agg-row.best .agg-date { color: var(--ok); font-weight: 800; }
+  .agg-col-date { flex: 1.5; font-size: 13px; font-weight: 600; }
+  .agg-col-votes { flex: 1; text-align: center; font-size: 13px; }
+  .agg-col-score { flex: 1; text-align: right; font-size: 13px; font-weight: 700; }
+  .best-badge {
+    background: var(--ok);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-left: 6px;
+  }
+
+  /* 参加者一覧（管理画面） */
+  .participant-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+  }
+  .participant-row:last-child { border-bottom: none; }
+  .participant-name { flex: 1; font-size: 14px; font-weight: 600; }
+  .priority-select {
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+  }
+  .priority-select:focus { border-color: var(--accent); }
+
+  /* タブ */
+  .tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+  .tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    background: var(--surface2);
+    color: var(--text2);
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .tab.active { background: var(--accent); color: white; }
+
+  /* チャート */
+  .chart-wrap { position: relative; height: 200px; }
+
+  /* ローディング */
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--text2);
+    font-size: 14px;
+  }
+  .loading::after {
+    content: '';
+    display: block;
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    margin: 12px auto 0;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* トースト */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--text);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 9999;
+    transition: transform 0.3s;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* 注意書き */
+  .note {
+    background: #FFF8F0;
+    border-left: 3px solid var(--accent2);
+    border-radius: 0 8px 8px 0;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+
+  /* 戻るボタン */
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    font-size: 14px;
+    color: var(--text2);
+    cursor: pointer;
+    padding: 0;
+    font-family: inherit;
+    margin-bottom: 16px;
+  }
+
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  .pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .pill-required { background: #FFEBEE; color: #B71C1C; }
+  .pill-important { background: #FFF8E1; color: #E65100; }
+  .pill-normal { background: var(--surface2); color: var(--text2); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div>
+      <div class="logo">にち<span>かん</span></div>
+      <div class="header-sub">みんなの日程を、かしこく調整</div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ===== ホーム画面 ===== -->
+  <div id="screen-home" class="screen active">
+    <div class="home-hero">
+      <h1>日程調整を<br>かんたんに</h1>
+      <p>IDを共有するだけ。<br>サーバー設定不要でリアルタイム集計。</p>
+    </div>
+    <div class="home-buttons">
+      <button class="home-btn" onclick="showScreen('create')">
+        <div class="home-btn-icon">✏️</div>
+        <div class="home-btn-label">作成する</div>
+        <div class="home-btn-desc">イベントを立てる</div>
+      </button>
+      <button class="home-btn" onclick="showScreen('join')">
+        <div class="home-btn-icon">🙋</div>
+        <div class="home-btn-label">参加する</div>
+        <div class="home-btn-desc">IDで参加・回答</div>
+      </button>
+      <button class="home-btn" onclick="showScreen('result-entry')">
+        <div class="home-btn-icon">📊</div>
+        <div class="home-btn-label">集計を見る</div>
+        <div class="home-btn-desc">リアルタイム集計</div>
+      </button>
+      <button class="home-btn" onclick="showScreen('admin-entry')">
+        <div class="home-btn-icon">⚙️</div>
+        <div class="home-btn-label">管理する</div>
+        <div class="home-btn-desc">重要度を設定</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== 作成画面 ===== -->
+  <div id="screen-create" class="screen">
+    <button class="back-btn" onclick="showScreen('home')">← ホームへ</button>
+    <div class="card">
+      <div class="card-title">イベント情報</div>
+      <div class="form-group">
+        <label class="form-label">イベント名 *</label>
+        <input class="form-input" id="create-name" placeholder="例：7月の飲み会" maxlength="40">
+      </div>
+      <div class="form-group">
+        <label class="form-label">メモ（任意）</label>
+        <input class="form-input" id="create-memo" placeholder="例：渋谷近辺で考えています">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">候補日を選択</div>
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="calPrev()">‹</button>
+        <div class="cal-month" id="cal-month-label"></div>
+        <button class="cal-nav-btn" onclick="calNext()">›</button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="date-tags" id="date-tags"></div>
+    </div>
+
+    <button class="btn btn-primary" onclick="createEvent()">イベントを作成する</button>
+  </div>
+
+  <!-- ===== 作成完了画面 ===== -->
+  <div id="screen-created" class="screen">
+    <div class="event-id-display">
+      <div class="event-id-label">イベントID</div>
+      <div class="event-id-value" id="created-id-display">----</div>
+      <button class="event-id-copy" onclick="copyId()">IDをコピー</button>
+    </div>
+    <div class="note">
+      このIDを参加者に共有してください。<br>
+      参加者はホーム→「参加する」からIDを入力して回答できます。
+    </div>
+    <div class="card">
+      <div id="created-summary"></div>
+    </div>
+    <button class="btn btn-primary" style="margin-bottom:10px" onclick="goToAdmin()">重要度を設定する（任意）</button>
+    <button class="btn btn-secondary" onclick="showScreen('home')">ホームへ戻る</button>
+  </div>
+
+  <!-- ===== 参加（ID入力）画面 ===== -->
+  <div id="screen-join" class="screen">
+    <button class="back-btn" onclick="showScreen('home')">← ホームへ</button>
+    <div class="card">
+      <div class="card-title">IDで参加</div>
+      <div class="form-group">
+        <label class="form-label">イベントID（6文字）</label>
+        <input class="form-input id-input-big" id="join-id" placeholder="ABCD12" maxlength="6" oninput="this.value=this.value.toUpperCase()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">あなたの名前</label>
+        <input class="form-input" id="join-name" placeholder="例：山田太郎">
+      </div>
+      <button class="btn btn-primary" onclick="joinEvent()">参加する</button>
+    </div>
+  </div>
+
+  <!-- ===== 回答画面 ===== -->
+  <div id="screen-answer" class="screen">
+    <button class="back-btn" onclick="showScreen('join')">← 戻る</button>
+    <div class="card" id="answer-event-info"></div>
+    <div class="card">
+      <div class="card-title">回答（○△×）</div>
+      <div id="answer-dates"></div>
+    </div>
+    <button class="btn btn-primary" onclick="submitAnswer()">回答を送信する</button>
+  </div>
+
+  <!-- ===== 集計入口 ===== -->
+  <div id="screen-result-entry" class="screen">
+    <button class="back-btn" onclick="showScreen('home')">← ホームへ</button>
+    <div class="card">
+      <div class="card-title">集計を見る</div>
+      <div class="form-group">
+        <label class="form-label">イベントID</label>
+        <input class="form-input id-input-big" id="result-id-input" placeholder="ABCD12" maxlength="6" oninput="this.value=this.value.toUpperCase()">
+      </div>
+      <button class="btn btn-primary" onclick="loadResult()">集計を表示</button>
+    </div>
+  </div>
+
+  <!-- ===== 集計画面 ===== -->
+  <div id="screen-result" class="screen">
+    <button class="back-btn" onclick="showScreen('result-entry')">← 戻る</button>
+    <div class="card" id="result-event-info"></div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('table')" id="tab-table">集計表</button>
+      <button class="tab" onclick="switchTab('chart')" id="tab-chart">グラフ</button>
+      <button class="tab" onclick="switchTab('best')" id="tab-best">最適日</button>
+    </div>
+
+    <div id="result-tab-table">
+      <div class="card">
+        <div class="card-title">○△×集計</div>
+        <div id="result-table-content"><div class="loading">読み込み中</div></div>
+      </div>
+    </div>
+
+    <div id="result-tab-chart" style="display:none">
+      <div class="card">
+        <div class="card-title">参加可能人数（○）</div>
+        <div class="chart-wrap"><canvas id="result-chart"></canvas></div>
+      </div>
+    </div>
+
+    <div id="result-tab-best" style="display:none">
+      <div class="card">
+        <div class="card-title">最適日提案</div>
+        <div id="result-best-content"><div class="loading">読み込み中</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 管理入口 ===== -->
+  <div id="screen-admin-entry" class="screen">
+    <button class="back-btn" onclick="showScreen('home')">← ホームへ</button>
+    <div class="card">
+      <div class="card-title">管理者ログイン</div>
+      <div class="note">管理者パスワードは作成時に設定されたものです。</div>
+      <div class="form-group">
+        <label class="form-label">イベントID</label>
+        <input class="form-input id-input-big" id="admin-id-input" placeholder="ABCD12" maxlength="6" oninput="this.value=this.value.toUpperCase()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">管理者パスワード</label>
+        <input class="form-input" id="admin-pass-input" type="password" placeholder="作成時のパスワード">
+      </div>
+      <button class="btn btn-primary" onclick="loginAdmin()">管理画面へ</button>
+    </div>
+  </div>
+
+  <!-- ===== 管理画面 ===== -->
+  <div id="screen-admin" class="screen">
+    <button class="back-btn" onclick="showScreen('home')">← ホームへ</button>
+    <div class="card" id="admin-event-info"></div>
+    <div class="card">
+      <div class="card-title">参加者の重要度設定</div>
+      <div class="note">
+        🔴 必須：この方が×の日は候補から除外<br>
+        🟡 重要：スコアに高い重みを付与（×3）<br>
+        ⚪ 一般：通常カウント（×1）<br>
+        ※重要度は参加者には表示されません
+      </div>
+      <div id="admin-participants"></div>
+      <div class="divider"></div>
+      <button class="btn btn-primary" onclick="saveAdmin()">重要度を保存する</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- トースト -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== 状態管理 =====
+let state = {
+  currentEventId: null,
+  currentEventData: null,
+  joinName: null,
+  answerChoices: {}, // dateStr → 'ok'|'maybe'|'no'
+  calYear: new Date().getFullYear(),
+  calMonth: new Date().getMonth(),
+  selectedDates: [],
+  adminToken: null,
+  resultUnsubscribe: null,
+  chart: null
+};
+
+// ===== 画面切り替え =====
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ===== ユーティリティ =====
+function showToast(msg, duration = 2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+function genId() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from({length: 6}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
+
+function genPass() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+function waitFirebase() {
+  return new Promise(resolve => {
+    if (window.firebaseReady) { resolve(); return; }
+    document.addEventListener('firebaseReady', resolve, { once: true });
+  });
+}
+
+function formatDate(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  const days = ['日', '月', '火', '水', '木', '金', '土'];
+  return `${m}/${d}（${days[date.getDay()]}）`;
+}
+
+// ===== カレンダー =====
+function renderCal() {
+  const y = state.calYear, m = state.calMonth;
+  document.getElementById('cal-month-label').textContent = `${y}年${m + 1}月`;
+  const grid = document.getElementById('cal-grid');
+  const days = ['日', '月', '火', '水', '木', '金', '土'];
+  let html = days.map(d => `<div class="cal-dow">${d}</div>`).join('');
+  const first = new Date(y, m, 1).getDay();
+  const last = new Date(y, m + 1, 0).getDate();
+  const today = new Date(); today.setHours(0,0,0,0);
+  for (let i = 0; i < first; i++) html += '<div class="cal-day"></div>';
+  for (let d = 1; d <= last; d++) {
+    const date = new Date(y, m, d);
+    const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isPast = date < today;
+    const isSel = state.selectedDates.includes(dateStr);
+    const dow = date.getDay();
+    let cls = 'cal-day';
+    if (isPast) cls += ' past';
+    if (isSel) cls += ' selected';
+    else if (dow === 0) cls += ' sunday';
+    else if (dow === 6) cls += ' saturday';
+    html += `<div class="${cls}" onclick="toggleDate('${dateStr}')">${d}</div>`;
+  }
+  grid.innerHTML = html;
+  renderDateTags();
+}
+
+function toggleDate(dateStr) {
+  const idx = state.selectedDates.indexOf(dateStr);
+  if (idx >= 0) state.selectedDates.splice(idx, 1);
+  else state.selectedDates.push(dateStr);
+  state.selectedDates.sort();
+  renderCal();
+}
+
+function renderDateTags() {
+  document.getElementById('date-tags').innerHTML = state.selectedDates.map(d =>
+    `<div class="date-tag">${formatDate(d)}<span class="date-tag-remove" onclick="toggleDate('${d}')">×</span></div>`
+  ).join('');
+}
+
+function calPrev() {
+  if (state.calMonth === 0) { state.calMonth = 11; state.calYear--; }
+  else state.calMonth--;
+  renderCal();
+}
+function calNext() {
+  if (state.calMonth === 11) { state.calMonth = 0; state.calYear++; }
+  else state.calMonth++;
+  renderCal();
+}
+
+// ===== イベント作成 =====
+async function createEvent() {
+  const name = document.getElementById('create-name').value.trim();
+  if (!name) { showToast('イベント名を入力してください'); return; }
+  if (state.selectedDates.length < 1) { showToast('候補日を1つ以上選択してください'); return; }
+
+  await waitFirebase();
+  const id = genId();
+  const pass = genPass();
+  const eventData = {
+    id,
+    name,
+    memo: document.getElementById('create-memo').value.trim(),
+    dates: state.selectedDates,
+    createdAt: Date.now(),
+    adminPass: pass,
+    priorities: {},
+    answers: {}
+  };
+
+  try {
+    const dbRef = window._dbRef(window._db, `events/${id}`);
+    await window._dbSet(dbRef, eventData);
+    state.currentEventId = id;
+    state.currentEventData = eventData;
+    state.adminToken = pass;
+
+    document.getElementById('created-id-display').textContent = id;
+    document.getElementById('created-summary').innerHTML = `
+      <div style="font-size:18px;font-weight:800;margin-bottom:4px">${name}</div>
+      ${eventData.memo ? `<div style="font-size:13px;color:var(--text2);margin-bottom:10px">${eventData.memo}</div>` : ''}
+      <div style="font-size:12px;color:var(--text2)">候補日 ${state.selectedDates.length}件</div>
+      <div class="date-tags" style="margin-top:8px">${state.selectedDates.map(d => `<div class="date-tag">${formatDate(d)}</div>`).join('')}</div>
+      <div class="divider"></div>
+      <div style="font-size:12px;color:var(--text2)">管理者パスワード</div>
+      <div style="font-size:20px;font-weight:800;letter-spacing:4px;color:var(--accent)">${pass}</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:4px">※必ずメモしてください</div>
+    `;
+    showScreen('created');
+  } catch(e) {
+    showToast('作成に失敗しました。Firebase設定を確認してください');
+    console.error(e);
+  }
+}
+
+function copyId() {
+  navigator.clipboard.writeText(state.currentEventId).then(() => showToast('IDをコピーしました'));
+}
+
+function goToAdmin() {
+  renderAdminScreen(state.currentEventData);
+  showScreen('admin');
+}
+
+// ===== 参加・回答 =====
+async function joinEvent() {
+  const id = document.getElementById('join-id').value.trim().toUpperCase();
+  const name = document.getElementById('join-name').value.trim();
+  if (!id || id.length !== 6) { showToast('IDは6文字で入力してください'); return; }
+  if (!name) { showToast('名前を入力してください'); return; }
+
+  await waitFirebase();
+  try {
+    const snap = await window._dbGet(window._dbRef(window._db, `events/${id}`));
+    if (!snap.exists()) { showToast('イベントが見つかりません'); return; }
+    const data = snap.val();
+    state.currentEventId = id;
+    state.currentEventData = data;
+    state.joinName = name;
+    state.answerChoices = {};
+
+    document.getElementById('answer-event-info').innerHTML = `
+      <div style="font-size:18px;font-weight:800">${data.name}</div>
+      ${data.memo ? `<div style="font-size:13px;color:var(--text2);margin-top:4px">${data.memo}</div>` : ''}
+    `;
+
+    document.getElementById('answer-dates').innerHTML = data.dates.map(d => `
+      <div class="answer-date-row">
+        <div>
+          <div class="answer-date-label">${formatDate(d)}</div>
+        </div>
+        <div class="answer-btns">
+          <button class="ans-btn" id="ans-ok-${d}" onclick="setAns('${d}','ok')">○</button>
+          <button class="ans-btn" id="ans-maybe-${d}" onclick="setAns('${d}','maybe')">△</button>
+          <button class="ans-btn" id="ans-no-${d}" onclick="setAns('${d}','no')">×</button>
+        </div>
+      </div>
+    `).join('');
+
+    showScreen('answer');
+  } catch(e) {
+    showToast('読み込みに失敗しました');
+    console.error(e);
+  }
+}
+
+function setAns(dateStr, val) {
+  state.answerChoices[dateStr] = val;
+  ['ok','maybe','no'].forEach(v => {
+    const btn = document.getElementById(`ans-${v}-${dateStr}`);
+    btn.className = 'ans-btn' + (v === val ? ` active-${v}` : '');
+  });
+}
+
+async function submitAnswer() {
+  const unanswered = state.currentEventData.dates.filter(d => !state.answerChoices[d]);
+  if (unanswered.length > 0) { showToast('全ての日付に回答してください'); return; }
+
+  await waitFirebase();
+  const safeKey = state.joinName.replace(/[.#$[\]]/g, '_');
+  try {
+    const ansRef = window._dbRef(window._db, `events/${state.currentEventId}/answers/${safeKey}`);
+    await window._dbSet(ansRef, {
+      name: state.joinName,
+      answers: state.answerChoices,
+      answeredAt: Date.now()
+    });
+    showToast('回答を送信しました！');
+    showScreen('home');
+  } catch(e) {
+    showToast('送信に失敗しました');
+    console.error(e);
+  }
+}
+
+// ===== 集計 =====
+async function loadResult() {
+  const id = document.getElementById('result-id-input').value.trim().toUpperCase();
+  if (!id || id.length !== 6) { showToast('IDは6文字で入力してください'); return; }
+
+  await waitFirebase();
+  if (state.resultUnsubscribe) state.resultUnsubscribe();
+
+  const eventRef = window._dbRef(window._db, `events/${id}`);
+  state.resultUnsubscribe = window._dbOnValue(eventRef, snap => {
+    if (!snap.exists()) { showToast('イベントが見つかりません'); return; }
+    const data = snap.val();
+    state.currentEventData = data;
+    renderResult(data);
+  });
+  showScreen('result');
+}
+
+function renderResult(data) {
+  document.getElementById('result-event-info').innerHTML = `
+    <div style="font-size:18px;font-weight:800">${data.name}</div>
+    ${data.memo ? `<div style="font-size:13px;color:var(--text2);margin-top:4px">${data.memo}</div>` : ''}
+    <div style="font-size:12px;color:var(--text2);margin-top:6px">${Object.keys(data.answers || {}).length}人が回答</div>
+  `;
+
+  const answers = data.answers || {};
+  const priorities = data.priorities || {};
+  const dates = data.dates || [];
+
+  // スコア計算
+  const scored = dates.map(date => {
+    let okCount = 0, maybeCount = 0, noCount = 0, score = 0;
+    let requiredFail = false;
+
+    Object.values(answers).forEach(ans => {
+      const key = ans.name.replace(/[.#$[\]]/g, '_');
+      const prio = priorities[key] || 'normal';
+      const weight = prio === 'important' ? 3 : 1;
+      const choice = ans.answers[date];
+
+      if (prio === 'required' && choice === 'no') requiredFail = true;
+      if (choice === 'ok') { okCount++; score += 2 * weight; }
+      else if (choice === 'maybe') { maybeCount++; score += 1 * weight; }
+      else if (choice === 'no') noCount++;
+    });
+
+    return { date, okCount, maybeCount, noCount, score, requiredFail };
+  });
+
+  const eligible = scored.filter(s => !s.requiredFail);
+  const maxScore = Math.max(...eligible.map(s => s.score), 0);
+
+  // 集計表
+  document.getElementById('result-table-content').innerHTML = scored.length === 0 ? '<div style="text-align:center;color:var(--text2);padding:20px">まだ回答がありません</div>' :
+    `<div class="agg-header">
+      <div class="agg-col-date">日付</div>
+      <div class="agg-col-votes" style="text-align:center">○ △ ×</div>
+      <div class="agg-col-score">スコア</div>
+    </div>` +
+    scored.map(s => `
+      <div class="agg-row ${!s.requiredFail && s.score === maxScore && maxScore > 0 ? 'best' : ''}">
+        <div class="agg-col-date">
+          ${formatDate(s.date)}
+          ${!s.requiredFail && s.score === maxScore && maxScore > 0 ? '<span class="best-badge">最適</span>' : ''}
+          ${s.requiredFail ? '<span class="pill pill-required" style="margin-left:4px">必須NG</span>' : ''}
+        </div>
+        <div class="agg-col-votes">
+          <span style="color:var(--ok);font-weight:700">${s.okCount}</span>
+          <span style="color:var(--text2)"> / </span>
+          <span style="color:var(--maybe)">${s.maybeCount}</span>
+          <span style="color:var(--text2)"> / </span>
+          <span style="color:var(--no)">${s.noCount}</span>
+        </div>
+        <div class="agg-col-score" style="color:${s.requiredFail ? 'var(--text2)' : 'var(--text)'}">
+          ${s.requiredFail ? '—' : s.score}
+        </div>
+      </div>
+    `).join('');
+
+  // グラフ
+  if (state.chart) state.chart.destroy();
+  const ctx = document.getElementById('result-chart').getContext('2d');
+  state.chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: scored.map(s => formatDate(s.date)),
+      datasets: [{
+        label: '○（参加可能）',
+        data: scored.map(s => s.okCount),
+        backgroundColor: scored.map(s => s.requiredFail ? '#eee' : (!s.requiredFail && s.score === maxScore && maxScore > 0 ? '#2E7D32' : '#81C784')),
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1 } },
+        x: { ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+
+  // 最適日
+  const bestDate = eligible.length > 0 ? eligible.reduce((a, b) => a.score > b.score ? a : b) : null;
+  document.getElementById('result-best-content').innerHTML = bestDate && bestDate.score > 0 ?
+    `<div style="text-align:center;padding:20px 0">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:8px">重み付きスコア最高日</div>
+      <div style="font-size:32px;font-weight:900;color:var(--ok)">${formatDate(bestDate.date)}</div>
+      <div style="font-size:14px;color:var(--text2);margin-top:8px">スコア ${bestDate.score} ｜ ○${bestDate.okCount}人 △${bestDate.maybeCount}人 ×${bestDate.noCount}人</div>
+    </div>
+    <div class="note" style="margin-top:16px">
+      必須メンバーが参加できる日のみが候補になります。<br>
+      重要メンバーの○はスコアが3倍加算されます。
+    </div>` :
+    `<div style="text-align:center;color:var(--text2);padding:30px">
+      ${Object.keys(answers).length === 0 ? 'まだ回答がありません' : '全員が参加できる日がありません'}
+    </div>`;
+}
+
+function switchTab(name) {
+  ['table', 'chart', 'best'].forEach(t => {
+    document.getElementById(`result-tab-${t}`).style.display = t === name ? 'block' : 'none';
+    document.getElementById(`tab-${t}`).classList.toggle('active', t === name);
+  });
+}
+
+// ===== 管理画面 =====
+async function loginAdmin() {
+  const id = document.getElementById('admin-id-input').value.trim().toUpperCase();
+  const pass = document.getElementById('admin-pass-input').value.trim();
+  if (!id || !pass) { showToast('IDとパスワードを入力してください'); return; }
+
+  await waitFirebase();
+  try {
+    const snap = await window._dbGet(window._dbRef(window._db, `events/${id}`));
+    if (!snap.exists()) { showToast('イベントが見つかりません'); return; }
+    const data = snap.val();
+    if (data.adminPass !== pass) { showToast('パスワードが違います'); return; }
+    state.currentEventId = id;
+    state.currentEventData = data;
+    state.adminToken = pass;
+    renderAdminScreen(data);
+    showScreen('admin');
+  } catch(e) {
+    showToast('読み込みに失敗しました');
+    console.error(e);
+  }
+}
+
+function renderAdminScreen(data) {
+  document.getElementById('admin-event-info').innerHTML = `
+    <div style="font-size:18px;font-weight:800">${data.name}</div>
+    <div style="font-size:12px;color:var(--text2);margin-top:4px">ID: ${data.id}</div>
+  `;
+
+  const answers = data.answers || {};
+  const priorities = data.priorities || {};
+  const participants = Object.values(answers);
+
+  if (participants.length === 0) {
+    document.getElementById('admin-participants').innerHTML = '<div style="text-align:center;color:var(--text2);padding:20px">まだ回答がありません</div>';
+    return;
+  }
+
+  document.getElementById('admin-participants').innerHTML = participants.map(p => {
+    const key = p.name.replace(/[.#$[\]]/g, '_');
+    const prio = priorities[key] || 'normal';
+    return `
+      <div class="participant-row">
+        <div class="participant-name">${p.name}</div>
+        <select class="priority-select" id="prio-${key}">
+          <option value="required" ${prio === 'required' ? 'selected' : ''}>🔴 必須</option>
+          <option value="important" ${prio === 'important' ? 'selected' : ''}>🟡 重要</option>
+          <option value="normal" ${prio === 'normal' ? 'selected' : ''}>⚪ 一般</option>
+        </select>
+      </div>
+    `;
+  }).join('');
+}
+
+async function saveAdmin() {
+  const answers = state.currentEventData.answers || {};
+  const priorities = {};
+  Object.values(answers).forEach(p => {
+    const key = p.name.replace(/[.#$[\]]/g, '_');
+    const sel = document.getElementById(`prio-${key}`);
+    if (sel) priorities[key] = sel.value;
+  });
+
+  await waitFirebase();
+  try {
+    await window._dbUpdate(window._dbRef(window._db, `events/${state.currentEventId}`), { priorities });
+    showToast('重要度を保存しました');
+  } catch(e) {
+    showToast('保存に失敗しました');
+    console.error(e);
+  }
+}
+
+// ===== 初期化 =====
+const urlParams = new URLSearchParams(location.search);
+const urlId = urlParams.get('id');
+if (urlId) {
+  document.getElementById('join-id').value = urlId.toUpperCase();
+  document.getElementById('result-id-input').value = urlId.toUpperCase();
+}
+
+renderCal();
+</script>
+</body>
+</html>
