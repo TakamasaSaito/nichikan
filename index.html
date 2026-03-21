@@ -6,35 +6,7 @@
 <title>にちかん - 日程調整</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 
-<!-- ★ Firebase設定をここに貼り付けてください ★ -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, set, get, update, onValue, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-
-  // ▼▼▼ あなたのFirebase設定に書き換えてください ▼▼▼
-  const firebaseConfig = {
-    apiKey: "AIzaSyBi8T1eiSrFt4Cvqg8Cc1P6nmob-hpOSrs",
-    authDomain: "nichikan-7788c.firebaseapp.com",
-    databaseURL: "https://nichikan-7788c-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "nichikan-7788c",
-    storageBucket: "nichikan-7788c.firebasestorage.app",
-    messagingSenderId: "332427860675",
-    appId: "1:332427860675:web:d6ba6e6226ca9c4246e076"
-  };
-  // ▲▲▲ ここまで ▲▲▲
-
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-  window._db = db;
-  window._dbRef = ref;
-  window._dbSet = set;
-  window._dbGet = get;
-  window._dbUpdate = update;
-  window._dbOnValue = onValue;
-  window._dbPush = push;
-  window.firebaseReady = true;
-  document.dispatchEvent(new Event('firebaseReady'));
-</script>
+<!-- Firebase は body末尾のscriptで一括初期化 -->
 
 <style>
   :root {
@@ -680,7 +652,23 @@
 <!-- トースト -->
 <div class="toast" id="toast"></div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, update, onValue, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBi8T1eiSrFt4Cvqg8Cc1P6nmob-hpOSrs",
+  authDomain: "nichikan-7788c.firebaseapp.com",
+  databaseURL: "https://nichikan-7788c-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "nichikan-7788c",
+  storageBucket: "nichikan-7788c.firebasestorage.app",
+  messagingSenderId: "332427860675",
+  appId: "1:332427860675:web:d6ba6e6226ca9c4246e076"
+};
+
+const _app = initializeApp(firebaseConfig);
+const _db = getDatabase(_app);
+
 // ===== 状態管理 =====
 let state = {
   currentEventId: null,
@@ -719,12 +707,6 @@ function genPass() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-function waitFirebase() {
-  return new Promise(resolve => {
-    if (window.firebaseReady) { resolve(); return; }
-    document.addEventListener('firebaseReady', resolve, { once: true });
-  });
-}
 
 function formatDate(dateStr) {
   const [y, m, d] = dateStr.split('-').map(Number);
@@ -792,7 +774,6 @@ async function createEvent() {
   if (!name) { showToast('イベント名を入力してください'); return; }
   if (state.selectedDates.length < 1) { showToast('候補日を1つ以上選択してください'); return; }
 
-  await waitFirebase();
   const id = genId();
   const pass = genPass();
   const eventData = {
@@ -807,8 +788,8 @@ async function createEvent() {
   };
 
   try {
-    const dbRef = window._dbRef(window._db, `events/${id}`);
-    await window._dbSet(dbRef, eventData);
+    const dbRef = ref(_db, `events/${id}`);
+    await set(dbRef, eventData);
     state.currentEventId = id;
     state.currentEventData = eventData;
     state.adminToken = pass;
@@ -847,9 +828,8 @@ async function joinEvent() {
   if (!id || id.length !== 6) { showToast('IDは6文字で入力してください'); return; }
   if (!name) { showToast('名前を入力してください'); return; }
 
-  await waitFirebase();
   try {
-    const snap = await window._dbGet(window._dbRef(window._db, `events/${id}`));
+    const snap = await get(ref(_db, `events/${id}`));
     if (!snap.exists()) { showToast('イベントが見つかりません'); return; }
     const data = snap.val();
     state.currentEventId = id;
@@ -894,11 +874,10 @@ async function submitAnswer() {
   const unanswered = state.currentEventData.dates.filter(d => !state.answerChoices[d]);
   if (unanswered.length > 0) { showToast('全ての日付に回答してください'); return; }
 
-  await waitFirebase();
   const safeKey = state.joinName.replace(/[.#$[\]]/g, '_');
   try {
-    const ansRef = window._dbRef(window._db, `events/${state.currentEventId}/answers/${safeKey}`);
-    await window._dbSet(ansRef, {
+    const ansRef = ref(_db, `events/${state.currentEventId}/answers/${safeKey}`);
+    await set(ansRef, {
       name: state.joinName,
       answers: state.answerChoices,
       answeredAt: Date.now()
@@ -916,11 +895,10 @@ async function loadResult() {
   const id = document.getElementById('result-id-input').value.trim().toUpperCase();
   if (!id || id.length !== 6) { showToast('IDは6文字で入力してください'); return; }
 
-  await waitFirebase();
   if (state.resultUnsubscribe) state.resultUnsubscribe();
 
-  const eventRef = window._dbRef(window._db, `events/${id}`);
-  state.resultUnsubscribe = window._dbOnValue(eventRef, snap => {
+  const eventRef = ref(_db, `events/${id}`);
+  state.resultUnsubscribe = onValue(eventRef, snap => {
     if (!snap.exists()) { showToast('イベントが見つかりません'); return; }
     const data = snap.val();
     state.currentEventData = data;
@@ -1044,9 +1022,8 @@ async function loginAdmin() {
   const pass = document.getElementById('admin-pass-input').value.trim();
   if (!id || !pass) { showToast('IDとパスワードを入力してください'); return; }
 
-  await waitFirebase();
   try {
-    const snap = await window._dbGet(window._dbRef(window._db, `events/${id}`));
+    const snap = await get(ref(_db, `events/${id}`));
     if (!snap.exists()) { showToast('イベントが見つかりません'); return; }
     const data = snap.val();
     if (data.adminPass !== pass) { showToast('パスワードが違います'); return; }
@@ -1101,9 +1078,8 @@ async function saveAdmin() {
     if (sel) priorities[key] = sel.value;
   });
 
-  await waitFirebase();
   try {
-    await window._dbUpdate(window._dbRef(window._db, `events/${state.currentEventId}`), { priorities });
+    await update(ref(_db, `events/${state.currentEventId}`), { priorities });
     showToast('重要度を保存しました');
   } catch(e) {
     showToast('保存に失敗しました');
@@ -1120,6 +1096,22 @@ if (urlId) {
 }
 
 renderCal();
+
+// module内の関数をグローバルに公開（インラインonclick対応）
+window.showScreen = showScreen;
+window.calPrev = calPrev;
+window.calNext = calNext;
+window.toggleDate = toggleDate;
+window.createEvent = createEvent;
+window.copyId = copyId;
+window.goToAdmin = goToAdmin;
+window.joinEvent = joinEvent;
+window.setAns = setAns;
+window.submitAnswer = submitAnswer;
+window.loadResult = loadResult;
+window.switchTab = switchTab;
+window.loginAdmin = loginAdmin;
+window.saveAdmin = saveAdmin;
 </script>
 </body>
 </html>
