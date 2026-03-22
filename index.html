@@ -5,120 +5,482 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>にちかん - 日程調整</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@400;700&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg:#F7F5F0;--surface:#FFFFFF;--surface2:#F0EDE6;--border:#E2DDD5;
-    --text:#1A1714;--text2:#6B6560;--accent:#D4521A;--accent2:#E8A87C;
-    --ok:#2E7D32;--maybe:#E65100;--no:#B71C1C;
-    --ok-bg:#E8F5E9;--maybe-bg:#FFF3E0;--no-bg:#FFEBEE;
-    --radius:16px;--shadow:0 2px 12px rgba(0,0,0,0.08);
+  :root{
+    --bg0:#F0EEE9;--bg1:#F7F6F2;--bg2:#FFFFFF;--bg3:#F4F2EE;--bg4:#FFFFFF;
+    --border:rgba(0,0,0,0.08);--border-gold:rgba(180,140,40,0.2);
+    --text:#0F0E0C;--text2:#6B6560;--text3:#9E9890;
+    --gold:#b8922e;--gold2:#d4aa50;
+    --ok:#1a9e75;--maybe:#c47a0a;--no:#c93044;
+    --ok-bg:rgba(26,158,117,.08);--maybe-bg:rgba(196,122,10,.08);--no-bg:rgba(201,48,68,.08);
+    --shadow-card:0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.05);
+    --radius:14px;--radius-sm:8px;
+    --font-serif:'DM Serif Display',serif;
+    --font-mono:'JetBrains Mono',monospace;
+    --font-sans:'Noto Sans JP',sans-serif;
   }
+  @media(prefers-color-scheme:dark){:root{
+    --bg0:#080a0f;--bg1:#0d1017;--bg2:#141820;--bg3:#1c2130;--bg4:#232b3a;
+    --border:rgba(255,255,255,0.06);--border-gold:rgba(201,168,76,0.18);
+    --text:#eceae4;--text2:#8a8070;--text3:#5a5248;
+    --gold:#c9a84c;--gold2:#e8c96a;
+    --ok:#2dd4a0;--maybe:#f5a623;--no:#f05c6e;
+    --ok-bg:rgba(45,212,160,.1);--maybe-bg:rgba(245,166,35,.1);--no-bg:rgba(240,92,110,.1);
+    --shadow-card:0 1px 0 rgba(201,168,76,.07),0 4px 24px rgba(0,0,0,.45);
+  }}
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  body{font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:40px}
-  .header{background:var(--text);color:white;padding:20px 20px 16px;position:sticky;top:0;z-index:100}
-  .header-inner{max-width:480px;margin:0 auto}
-  .logo{font-size:22px;font-weight:800;letter-spacing:-0.5px}
-  .logo span{color:var(--accent2)}
-  .header-sub{font-size:11px;opacity:0.5;margin-top:2px}
+  body{font-family:var(--font-sans);background:var(--bg0);color:var(--text);min-height:100vh;padding-bottom:48px}
+
+  .card{background:var(--bg2);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-card);margin-bottom:14px;border:1px solid var(--border);position:relative;overflow:hidden}
+  @media(prefers-color-scheme:dark){
+    .card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.35),transparent);pointer-events:none}
+  }
+  .card-title{font-family:var(--font-mono);font-size:9px;font-weight:700;color:var(--text3);letter-spacing:3px;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .card-title::before{content:'';display:block;width:2px;height:12px;background:var(--gold);border-radius:2px;flex-shrink:0}
+
+  .header{background:var(--bg1);border-bottom:1px solid var(--border-gold);padding:18px 20px 14px;position:sticky;top:0;z-index:100}
+  @media(prefers-color-scheme:dark){.header{background:rgba(8,10,15,.9);backdrop-filter:blur(16px)}}
+  .header-inner{max-width:480px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
+  .logo{font-family:var(--font-serif);font-size:24px;color:var(--text)}
+  .logo span{color:var(--gold)}
+  .header-sub{font-family:var(--font-mono);font-size:8px;letter-spacing:3px;text-transform:uppercase;color:var(--text3);margin-top:3px}
+  .demo-badge{font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:2px;color:var(--bg0);background:var(--gold);padding:3px 10px;border-radius:20px}
+
   .main{max-width:480px;margin:0 auto;padding:20px 16px}
-  .card{background:var(--surface);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:16px}
-  .card-title{font-size:13px;font-weight:700;color:var(--text2);letter-spacing:.05em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:6px}
-  .card-title::before{content:'';display:block;width:3px;height:14px;background:var(--accent);border-radius:2px}
   .screen{display:none}.screen.active{display:block}
-  .home-hero{background:var(--text);border-radius:var(--radius);padding:28px 24px;color:white;margin-bottom:16px;position:relative;overflow:hidden}
-  .home-hero::after{content:'📅';position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:48px;opacity:.15}
-  .home-hero h1{font-size:24px;font-weight:800;margin-bottom:6px}
-  .home-hero p{font-size:13px;opacity:.6;line-height:1.6}
-  .home-buttons{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .home-btn{background:var(--surface);border:none;border-radius:var(--radius);padding:20px 16px;text-align:left;cursor:pointer;box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s}
-  .home-btn:active{transform:scale(.97);box-shadow:none}
-  .home-btn-icon{font-size:28px;margin-bottom:8px}
-  .home-btn-label{font-size:14px;font-weight:700;color:var(--text)}
-  .home-btn-desc{font-size:11px;color:var(--text2);margin-top:2px}
+
+  .home-hero{background:var(--bg2);border-radius:var(--radius);padding:28px 24px;margin-bottom:14px;position:relative;overflow:hidden;border:1px solid var(--border-gold);box-shadow:var(--shadow-card)}
+  @media(prefers-color-scheme:dark){
+    .home-hero{background:linear-gradient(135deg,#0d1017 0%,#141820 100%)}
+    .home-hero::after{content:'';position:absolute;top:-40px;right:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(201,168,76,.1) 0%,transparent 70%);pointer-events:none}
+  }
+  .home-hero-label{font-family:var(--font-mono);font-size:8px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+  .home-hero h1{font-family:var(--font-serif);font-size:30px;color:var(--text);margin-bottom:6px;line-height:1.2}
+  .home-hero p{font-size:13px;color:var(--text2);line-height:1.7}
+  .home-buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .home-btn{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px 16px;text-align:left;cursor:pointer;box-shadow:var(--shadow-card);transition:transform .15s;position:relative;overflow:hidden}
+  .home-btn:active{transform:scale(.96)}
+  @media(prefers-color-scheme:dark){.home-btn::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.25),transparent)}}
+  .home-btn-icon{font-size:26px;margin-bottom:8px}
+  .home-btn-label{font-family:var(--font-sans);font-size:14px;font-weight:700;color:var(--text)}
+  .home-btn-desc{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--text3);margin-top:3px;text-transform:uppercase}
+
   .form-group{margin-bottom:14px}
-  .form-label{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px;display:block}
-  .form-input{width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:10px;font-size:15px;background:var(--surface);color:var(--text);outline:none;transition:border-color .2s;font-family:inherit}
-  .form-input:focus{border-color:var(--accent)}
-  .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-  .cal-nav-btn{background:var(--surface2);border:none;border-radius:8px;width:36px;height:36px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-  .cal-month{font-size:15px;font-weight:700}
-  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
-  .cal-dow{text-align:center;font-size:10px;font-weight:700;color:var(--text2);padding:4px 0}
-  .cal-dow:first-child{color:#c0392b}.cal-dow:last-child{color:#2980b9}
-  .cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:13px;cursor:pointer;border:2px solid transparent;transition:all .15s;font-weight:500}
-  .cal-day.past{color:#ccc;pointer-events:none}
-  .cal-day.selected{background:var(--accent);color:white!important;font-weight:700}
-  .cal-day.sunday{color:#c0392b}.cal-day.saturday{color:#2980b9}
-  .date-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-  .date-tag{background:var(--ok-bg);color:var(--ok);border-radius:20px;padding:4px 10px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:4px}
-  .date-tag-remove{cursor:pointer;opacity:.6;font-size:14px}
-  .btn{width:100%;padding:16px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit}
+  .form-label{font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--text3);margin-bottom:8px;display:block}
+  .form-input{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:15px;font-family:var(--font-sans);background:var(--bg3);color:var(--text);outline:none;transition:border-color .2s,box-shadow .2s}
+  .form-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.12)}
+  .id-input-big{font-family:var(--font-mono);text-align:center;font-size:26px;font-weight:700;letter-spacing:8px;text-transform:uppercase}
+
+  .member-input-row{display:flex;gap:8px;margin-bottom:10px}
+  .member-input-row .form-input{flex:1}
+  .member-add-btn{padding:0 16px;background:var(--gold);color:var(--bg0);border:none;border-radius:var(--radius-sm);font-size:18px;cursor:pointer;flex-shrink:0;font-weight:700;transition:transform .15s}
+  .member-add-btn:active{transform:scale(.94)}
+  .member-tags{display:flex;flex-wrap:wrap;gap:6px}
+  .member-tag{background:var(--bg3);border:1px solid var(--border-gold);border-radius:20px;padding:4px 12px;font-family:var(--font-mono);font-size:11px;color:var(--gold);display:flex;align-items:center;gap:6px}
+  .member-tag-remove{cursor:pointer;opacity:.5;font-size:13px}
+
+  .btn{width:100%;padding:15px;border:none;border-radius:var(--radius-sm);font-size:15px;font-weight:700;font-family:var(--font-sans);cursor:pointer;transition:transform .15s;position:relative;overflow:hidden}
   .btn:active{transform:scale(.98)}
-  .btn-primary{background:var(--accent);color:white}
-  .btn-secondary{background:var(--surface2);color:var(--text)}
-  .event-id-display{background:var(--text);color:white;border-radius:var(--radius);padding:24px;text-align:center;margin-bottom:16px}
-  .event-id-label{font-size:11px;opacity:.5;margin-bottom:8px}
-  .event-id-value{font-size:40px;font-weight:900;letter-spacing:6px;color:var(--accent2)}
-  .event-id-copy{margin-top:12px;background:rgba(255,255,255,.1);color:white;border:none;border-radius:8px;padding:10px 20px;font-size:13px;cursor:pointer;font-family:inherit}
-  .id-input-big{text-align:center;font-size:32px;font-weight:900;letter-spacing:8px;text-transform:uppercase}
+  .btn-primary{background:var(--gold);color:#0a0800;box-shadow:0 2px 12px rgba(201,168,76,.25)}
+  .btn-primary::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:shimmer 2.5s 1s infinite}
+  @keyframes shimmer{0%{left:-100%}100%{left:200%}}
+  .btn-secondary{background:var(--bg3);color:var(--text);border:1px solid var(--border)}
+  .btn-danger{background:var(--no-bg);color:var(--no);border:1px solid rgba(240,92,110,.15)}
+
+  .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .cal-nav-btn{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);width:34px;height:34px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);transition:transform .15s}
+  .cal-nav-btn:active{transform:scale(.92)}
+  .cal-month{font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--text);letter-spacing:1px}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+  .cal-dow{text-align:center;font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:1px;color:var(--text3);padding:4px 0;text-transform:uppercase}
+  .cal-dow:first-child{color:var(--no)}.cal-dow:last-child{color:#4fa3e8}
+  .cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);font-family:var(--font-mono);font-size:12px;cursor:pointer;border:1px solid transparent;transition:all .15s;font-weight:500;color:var(--text)}
+  .cal-day.past{color:var(--text3);pointer-events:none}
+  .cal-day.selected{background:var(--gold);color:#0a0800!important;font-weight:700;border-color:var(--gold);box-shadow:0 2px 8px rgba(201,168,76,.3)}
+  .cal-day.sunday{color:var(--no)}.cal-day.saturday{color:#4fa3e8}
+  .date-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .date-tag{background:var(--ok-bg);border:1px solid rgba(45,212,160,.15);color:var(--ok);border-radius:20px;padding:4px 10px;font-family:var(--font-mono);font-size:10px;font-weight:700;display:flex;align-items:center;gap:4px}
+  .date-tag-remove{cursor:pointer;opacity:.6;font-size:13px}
+
+  .event-id-display{background:var(--bg1);border:1px solid var(--border-gold);border-radius:var(--radius);padding:28px 24px;text-align:center;margin-bottom:14px;position:relative;overflow:hidden}
+  @media(prefers-color-scheme:dark){.event-id-display::after{content:'';position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:200px;height:120px;background:radial-gradient(circle,rgba(201,168,76,.12) 0%,transparent 70%);pointer-events:none}}
+  .event-id-label{font-family:var(--font-mono);font-size:8px;letter-spacing:3px;text-transform:uppercase;color:var(--text3);margin-bottom:10px}
+  .event-id-value{font-family:var(--font-mono);font-size:34px;font-weight:700;letter-spacing:8px;color:var(--gold)}
+  .event-id-copy{margin-top:14px;background:rgba(201,168,76,.1);color:var(--gold);border:1px solid var(--border-gold);border-radius:var(--radius-sm);padding:10px 20px;font-family:var(--font-mono);font-size:11px;font-weight:700;cursor:pointer;display:block;width:100%;letter-spacing:1px;transition:background .2s}
+  .event-id-copy:active{background:rgba(201,168,76,.2)}
+
+  .name-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .name-chip{padding:9px 16px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);font-family:var(--font-sans);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text)}
+  .name-chip.selected{background:var(--gold);color:#0a0800;border-color:var(--gold)}
+
   .answer-date-row{display:flex;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);gap:10px}
   .answer-date-row:last-child{border-bottom:none}
-  .answer-date-label{flex:1;font-size:14px;font-weight:600}
+  .answer-date-label{flex:1;font-family:var(--font-mono);font-size:12px;font-weight:700;color:var(--text);letter-spacing:.5px}
   .answer-btns{display:flex;gap:6px}
-  .ans-btn{width:42px;height:42px;border-radius:10px;border:2px solid var(--border);background:var(--surface);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
-  .ans-btn.active-ok{background:var(--ok-bg);border-color:var(--ok)}
-  .ans-btn.active-maybe{background:var(--maybe-bg);border-color:var(--maybe)}
-  .ans-btn.active-no{background:var(--no-bg);border-color:var(--no)}
-  .agg-header{display:flex;background:var(--surface2);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:11px;font-weight:700;color:var(--text2)}
-  .agg-row{display:flex;align-items:center;padding:10px;border-radius:8px;margin-bottom:4px}
-  .agg-row.best{background:#E8F5E9}
-  .agg-col-date{flex:1.5;font-size:13px;font-weight:600}
-  .agg-col-votes{flex:1;text-align:center;font-size:13px}
-  .agg-col-score{flex:1;text-align:right;font-size:13px;font-weight:700}
-  .best-badge{background:var(--ok);color:white;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px}
+  .ans-btn{width:44px;height:44px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg3);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .ans-btn:active{transform:scale(.92)}
+  .ans-btn.active-ok{background:var(--ok-bg);border-color:var(--ok);box-shadow:0 0 0 2px rgba(45,212,160,.15)}
+  .ans-btn.active-maybe{background:var(--maybe-bg);border-color:var(--maybe);box-shadow:0 0 0 2px rgba(245,166,35,.15)}
+  .ans-btn.active-no{background:var(--no-bg);border-color:var(--no);box-shadow:0 0 0 2px rgba(240,92,110,.15)}
+
+  .agg-header{display:flex;background:var(--bg0);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:4px;font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text3)}
+  .agg-row{display:flex;align-items:center;padding:10px;border-radius:var(--radius-sm);margin-bottom:3px;border:1px solid transparent}
+  .agg-row.best{background:var(--ok-bg);border-color:rgba(45,212,160,.12)}
+  .agg-col-date{flex:1.5;font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--text)}
+  .agg-col-votes{flex:1;text-align:center;font-family:var(--font-mono);font-size:12px}
+  .agg-col-score{flex:1;text-align:right;font-family:var(--font-serif);font-size:16px;color:var(--gold)}
+  .best-badge{background:var(--ok);color:var(--bg0);font-family:var(--font-mono);font-size:8px;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:20px;margin-left:6px}
+
+  .pending-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .pending-chip{padding:4px 12px;border-radius:20px;font-family:var(--font-mono);font-size:10px;font-weight:700;border:1px solid}
+  .pending-chip.answered{background:var(--ok-bg);color:var(--ok);border-color:rgba(45,212,160,.2)}
+  .pending-chip.not-answered{background:var(--no-bg);color:var(--no);border-color:rgba(240,92,110,.2)}
+  .status-bar{display:flex;align-items:center;justify-content:space-between;background:var(--bg0);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;font-family:var(--font-mono);font-size:10px;letter-spacing:1px;color:var(--text2)}
+  .status-bar strong{color:var(--gold)}
+
   .participant-row{display:flex;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);gap:10px}
   .participant-row:last-child{border-bottom:none}
-  .participant-name{flex:1;font-size:14px;font-weight:600}
-  .priority-select{border:2px solid var(--border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);outline:none}
+  .participant-name{flex:1;font-size:14px;font-weight:700;color:var(--text)}
+  .priority-select{border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-family:var(--font-mono);background:var(--bg3);color:var(--text);outline:none;transition:border-color .2s}
+  .priority-select:focus{border-color:var(--gold)}
+
   .tabs{display:flex;gap:6px;margin-bottom:16px}
-  .tab{flex:1;padding:10px;text-align:center;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;border:none;background:var(--surface2);color:var(--text2);transition:all .15s;font-family:inherit}
-  .tab.active{background:var(--accent);color:white}
+  .tab{flex:1;padding:10px;text-align:center;border-radius:var(--radius-sm);font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border:1px solid var(--border);background:var(--bg2);color:var(--text3);transition:all .15s}
+  .tab.active{background:var(--gold);color:#0a0800;border-color:var(--gold);box-shadow:0 2px 8px rgba(201,168,76,.2)}
+
   .chart-wrap{position:relative;height:200px}
-  .loading{text-align:center;padding:40px;color:var(--text2);font-size:14px}
-  .loading::after{content:'';display:block;width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;margin:12px auto 0;animation:spin .8s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:white;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:600;z-index:9999;transition:transform .3s;white-space:nowrap}
+  .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg4);color:var(--text);border:1px solid var(--border-gold);padding:12px 24px;border-radius:24px;font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:1px;z-index:9999;transition:transform .3s;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.2)}
   .toast.show{transform:translateX(-50%) translateY(0)}
-  .note{background:#FFF8F0;border-left:3px solid var(--accent2);border-radius:0 8px 8px 0;padding:10px 14px;font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:12px}
-  .back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;font-size:14px;color:var(--text2);cursor:pointer;padding:0;font-family:inherit;margin-bottom:16px}
+  .note{background:var(--bg0);border-left:2px solid var(--gold);border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:10px 14px;font-family:var(--font-mono);font-size:10px;letter-spacing:.5px;color:var(--text2);line-height:1.8;margin-bottom:14px}
+  .back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;font-family:var(--font-mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);cursor:pointer;padding:0;margin-bottom:18px;transition:color .15s}
+  .back-btn:active{color:var(--gold)}
   .divider{height:1px;background:var(--border);margin:16px 0}
-  .pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
-  .pill-required{background:#FFEBEE;color:#B71C1C}
+  .pill-required{background:var(--no-bg);color:var(--no);border:1px solid rgba(240,92,110,.2);display:inline-block;padding:2px 10px;border-radius:20px;font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:1px}
+
+  .event-list-item{display:flex;align-items:center;padding:14px 0;border-bottom:1px solid var(--border);gap:12px;cursor:pointer;transition:opacity .15s}
+  .event-list-item:last-child{border-bottom:none}
+  .event-list-item:active{opacity:.6}
+  .event-list-info{flex:1}
+  .event-list-name{font-size:15px;font-weight:700;color:var(--text)}
+  .event-list-meta{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-top:4px}
+  .event-list-id{font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--gold);letter-spacing:3px}
+  .event-list-arrow{color:var(--text3);font-size:18px}
+
+  /* ○△×凡例 */
+  .answer-legend{display:flex;gap:8px;margin-bottom:14px}
+  .legend-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:var(--radius-sm);border:1px solid var(--border)}
+  .legend-mark{font-size:20px;font-weight:700;line-height:1}
+  .legend-text{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;text-align:center;line-height:1.4}
+  .legend-ok{background:var(--ok-bg);border-color:rgba(45,212,160,.2)}
+  .legend-ok .legend-mark{color:var(--ok)}
+  .legend-ok .legend-text{color:var(--ok)}
+  .legend-maybe{background:var(--maybe-bg);border-color:rgba(245,166,35,.2)}
+  .legend-maybe .legend-mark{color:var(--maybe)}
+  .legend-maybe .legend-text{color:var(--maybe)}
+  .legend-no{background:var(--no-bg);border-color:rgba(240,92,110,.2)}
+  .legend-no .legend-mark{color:var(--no)}
+  .legend-no .legend-text{color:var(--no)}
+
+  /* コメント一覧 */
+  .comment-row{padding:12px 0;border-bottom:1px solid var(--border)}
+  .comment-row:last-child{border-bottom:none}
+  .comment-name{font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:1px;color:var(--gold);margin-bottom:5px}
+  .comment-text{font-size:14px;color:var(--text);line-height:1.6}
+
+  /* デモデータボタン */
+  .btn-demo-seed{
+    display:inline-flex;align-items:center;gap:8px;
+    background:none;border:1px solid var(--border-gold);
+    border-radius:20px;padding:8px 20px;
+    font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+    color:var(--gold);cursor:pointer;transition:all .2s;
+  }
+  .btn-demo-seed:active{background:rgba(201,168,76,.1);transform:scale(.97)}
+
+  /* 役割選択 */
+  .role-select{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:4px}
+  .role-btn{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px 16px;text-align:left;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+  .role-btn:active{transform:scale(.96)}
+  .role-host{border-color:rgba(201,168,76,.3)}
+  .role-guest{border-color:rgba(79,163,232,.3)}
+  @media(prefers-color-scheme:dark){
+    .role-host{background:linear-gradient(135deg,rgba(201,168,76,.06),transparent)}
+    .role-guest{background:linear-gradient(135deg,rgba(79,163,232,.06),transparent)}
+  }
+  .role-icon{font-size:32px;margin-bottom:8px}
+  .role-label{font-family:var(--font-serif);font-size:20px;color:var(--text);margin-bottom:4px}
+  .role-desc{font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5}
+  .role-features{display:flex;flex-direction:column;gap:3px}
+  .role-features span{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;color:var(--text3)}
+  .role-host .role-features span{color:rgba(201,168,76,.7)}
+  .role-guest .role-features span{color:rgba(79,163,232,.6)}
+
+  /* 役割ヘッダー */
+  .role-header{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:var(--radius-sm);margin-bottom:16px;font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+  .role-header.host{background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);color:var(--gold)}
+  .role-header.guest{background:rgba(79,163,232,.08);border:1px solid rgba(79,163,232,.2);color:#4fa3e8}
+  .role-header-icon{font-size:18px}
+
+  /* 回答済みチップ */
+  .name-chip.already-answered{border-color:var(--ok);color:var(--ok)}
+
+  /* 回答者名バッジ */
+  #answer-name-badge{display:flex;align-items:center;gap:8px;min-height:24px}
+  .answer-badge-name{font-family:var(--font-serif);font-size:18px;color:var(--gold)}
+  .answer-badge-edit{font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:2px;background:var(--maybe-bg);color:var(--maybe);border:1px solid rgba(245,166,35,.2);padding:2px 10px;border-radius:20px}
+  .answer-badge-new{font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:2px;background:var(--ok-bg);color:var(--ok);border:1px solid rgba(45,212,160,.2);padding:2px 10px;border-radius:20px}
+
+  /* 締め切りバッジ */
+  .deadline-badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:1px;padding:4px 12px;border-radius:20px;margin-top:8px}
+  .deadline-badge.urgent{background:var(--no-bg);color:var(--no);border:1px solid rgba(240,92,110,.2)}
+  .deadline-badge.soon{background:var(--maybe-bg);color:var(--maybe);border:1px solid rgba(245,166,35,.2)}
+  .deadline-badge.ok{background:var(--ok-bg);color:var(--ok);border:1px solid rgba(45,212,160,.2)}
+  .deadline-badge.expired{background:var(--bg0);color:var(--text3);border:1px solid var(--border)}
+
+  /* 確定バナー */
+  .decision-banner{background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.05));border:1px solid var(--border-gold);border-radius:var(--radius-sm);padding:16px;text-align:center;margin-bottom:14px}
+  .decision-banner-label{font-family:var(--font-mono);font-size:8px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:6px}
+  .decision-banner-date{font-family:var(--font-serif);font-size:28px;color:var(--gold)}
+
+  /* ヒートマップ */
+  .heat-bar{height:4px;border-radius:2px;margin-top:4px;transition:width .3s}
+
+  /* 決定日選択ボタン */
+  .decision-date-btn{width:100%;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-mono);font-size:12px;color:var(--text);cursor:pointer;text-align:left;margin-bottom:6px;transition:all .15s;display:flex;align-items:center;justify-content:space-between}
+  .decision-date-btn:active{transform:scale(.98)}
+  .decision-date-btn.selected{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+  .decision-confirmed{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--ok-bg);border:1px solid rgba(45,212,160,.2);border-radius:var(--radius-sm);font-family:var(--font-mono);font-size:12px;color:var(--ok)}
+
+  /* ウォークスルー */
+  .wt-overlay{position:fixed;inset:0;z-index:8000;pointer-events:none}
+  .wt-overlay.active{pointer-events:all}
+  .wt-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(2px)}
+  .wt-box{position:absolute;bottom:40px;left:16px;right:16px;background:var(--bg2);border:1px solid var(--border-gold);border-radius:var(--radius);padding:20px;box-shadow:0 8px 40px rgba(0,0,0,.4);z-index:1}
+  @media(prefers-color-scheme:dark){.wt-box::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(201,168,76,.5),transparent);border-radius:var(--radius) var(--radius) 0 0}}
+  .wt-step{font-family:var(--font-mono);font-size:8px;font-weight:700;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:6px}
+  .wt-title{font-family:var(--font-serif);font-size:22px;color:var(--text);margin-bottom:8px}
+  .wt-desc{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:16px}
+  .wt-footer{display:flex;align-items:center;justify-content:space-between}
+  .wt-progress{font-family:var(--font-mono);font-size:10px;color:var(--text3);letter-spacing:1px}
+  .wt-btn-skip{background:none;border:none;font-family:var(--font-mono);font-size:10px;letter-spacing:1px;color:var(--text3);cursor:pointer;padding:8px 12px}
+  .wt-btn-next{background:var(--gold);color:#0a0800;border:none;border-radius:var(--radius-sm);padding:10px 20px;font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:transform .15s}
+  .wt-btn-next:active{transform:scale(.96)}
+  .wt-highlight{outline:2px solid var(--gold);outline-offset:4px;border-radius:var(--radius-sm);animation:wtPulse 1.5s infinite}
+  @keyframes wtPulse{0%,100%{outline-color:var(--gold)}50%{outline-color:rgba(201,168,76,.3)}}
+
+  /* スコア内訳ポップアップ */
+  #score-popup{position:fixed;top:0;left:0;right:0;bottom:0;z-index:8500;display:none;align-items:flex-end;justify-content:center}
+  #score-popup.open{display:-webkit-flex;display:flex}
+  .score-popup-backdrop{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6)}
+  .score-popup-box{position:relative;z-index:1;background:var(--bg2);border:1px solid var(--border-gold);border-radius:16px 16px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;box-shadow:0 -8px 40px rgba(0,0,0,.4);max-height:80vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .score-popup-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px}
+  .score-popup-title{font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+  .score-popup-date{font-family:var(--font-serif);font-size:24px;color:var(--gold);margin-bottom:16px}
+  .score-popup-row{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);gap:8px}
+  .score-popup-row:last-child{border-bottom:none}
+  .score-popup-name{-webkit-flex:1;flex:1;font-size:14px;font-weight:600;color:var(--text)}
+  .score-popup-prio{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;padding:2px 8px;border-radius:10px;-webkit-flex-shrink:0;flex-shrink:0}
+  .prio-required{background:var(--no-bg);color:var(--no);border:1px solid rgba(240,92,110,.2)}
+  .prio-important{background:var(--maybe-bg);color:var(--maybe);border:1px solid rgba(245,166,35,.2)}
+  .prio-normal{background:var(--bg3);color:var(--text3);border:1px solid var(--border)}
+  .score-popup-ans{font-size:18px;width:28px;text-align:center;-webkit-flex-shrink:0;flex-shrink:0}
+  .score-popup-calc{font-family:var(--font-mono);font-size:11px;color:var(--gold);font-weight:700;min-width:36px;text-align:right;-webkit-flex-shrink:0;flex-shrink:0}
+  .score-popup-formula{margin-top:14px;padding:12px 14px;background:var(--bg0);border:1px solid var(--border-gold);border-radius:8px;font-family:var(--font-mono);font-size:11px;color:var(--text2);line-height:1.8}
+  .score-popup-total{font-size:14px;font-weight:700;color:var(--gold);margin-top:4px}
+  .agg-row-clickable{cursor:pointer;-webkit-tap-highlight-color:rgba(201,168,76,.08)}
+  .agg-row-clickable:active{background:rgba(201,168,76,.05)}
+
+  .demo-note{background:rgba(201,168,76,.06);border:1px solid var(--border-gold);border-radius:var(--radius-sm);padding:10px 14px;font-family:var(--font-mono);font-size:10px;letter-spacing:.5px;color:var(--gold);margin-bottom:14px;line-height:1.7}
+
+  /* オンボーディング */
+  #onboarding{position:fixed;inset:0;z-index:9999;background:var(--bg0);display:flex;flex-direction:column;overflow:hidden}
+  #onboarding.hidden{display:none}
+  .ob-slides{display:flex;width:400%;height:100%;transition:transform .45s cubic-bezier(.4,0,.2,1)}
+  .ob-slide{width:25%;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;position:relative}
+  .ob-slide-splash{background:var(--bg1)}
+  @media(prefers-color-scheme:dark){.ob-slide-splash{background:radial-gradient(ellipse at 50% 40%,#0d1420 0%,#080a0f 100%)}}
+  .ob-splash-logo{font-family:var(--font-serif);font-size:72px;color:var(--text);letter-spacing:2px;margin-bottom:8px;animation:logoIn .8s cubic-bezier(.34,1.56,.64,1) both}
+  .ob-splash-logo span{color:var(--gold)}
+  .ob-splash-sub{font-family:var(--font-mono);font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--text3);animation:fadeUp .6s .3s both}
+  .ob-splash-dot{width:6px;height:6px;background:var(--gold);border-radius:50%;margin:40px auto 0;animation:pulse 1.2s .8s infinite;box-shadow:0 0 10px rgba(201,168,76,.5)}
+  @keyframes logoIn{from{opacity:0;transform:scale(.7) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.6);opacity:.4}}
+  .ob-slide-how{background:var(--bg0)}
+  .ob-step-icon{font-size:72px;margin-bottom:20px;animation:bounceIn .5s cubic-bezier(.34,1.56,.64,1) both}
+  @keyframes bounceIn{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
+  .ob-step-num{font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:4px;color:var(--gold);text-transform:uppercase;margin-bottom:10px}
+  .ob-step-title{font-family:var(--font-serif);font-size:30px;color:var(--text);margin-bottom:14px;line-height:1.2}
+  .ob-step-desc{font-size:14px;color:var(--text2);line-height:1.75;max-width:280px}
+  .ob-slide-start{background:var(--bg1)}
+  @media(prefers-color-scheme:dark){.ob-slide-start{background:radial-gradient(ellipse at 50% 30%,#1a1400 0%,#080a0f 100%)}}
+  .ob-start-icon{font-size:80px;margin-bottom:20px;animation:bounceIn .5s .1s cubic-bezier(.34,1.56,.64,1) both}
+  .ob-start-title{font-family:var(--font-serif);font-size:30px;color:var(--text);margin-bottom:10px}
+  .ob-start-desc{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:32px;max-width:280px}
+  .ob-start-btn{background:var(--gold);color:#0a0800;border:none;border-radius:50px;padding:16px 48px;font-size:15px;font-weight:900;font-family:var(--font-sans);cursor:pointer;box-shadow:0 4px 24px rgba(201,168,76,.3);transition:transform .15s;position:relative;overflow:hidden}
+  .ob-start-btn::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:shimmer 2s .5s infinite}
+  .ob-start-btn:active{transform:scale(.96)}
+  .ob-dots{position:absolute;bottom:40px;left:0;right:0;display:flex;justify-content:center;gap:6px}
+  .ob-dot{width:5px;height:5px;border-radius:50%;background:var(--border);transition:all .3s;border:1px solid var(--text3)}
+  .ob-dot.active{width:18px;border-radius:10px;background:var(--gold);border-color:var(--gold)}
+  .ob-next{position:absolute;bottom:80px;right:32px;background:none;border:none;font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:2px;cursor:pointer;color:var(--gold);text-transform:uppercase}
+  .ob-skip{position:absolute;top:56px;right:24px;background:none;border:none;font-family:var(--font-mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;color:var(--text3)}
 </style>
 </head>
 <body>
+
+<!-- ===== オンボーディング ===== -->
+<div id="onboarding">
+  <div class="ob-slides" id="ob-slides">
+    <!-- スライド0：スプラッシュ -->
+    <div class="ob-slide ob-slide-splash">
+      <div class="ob-splash-logo">にち<span>かん</span></div>
+      <div class="ob-splash-sub">日程調整を、かしこく。</div>
+      <div class="ob-splash-dot"></div>
+      <div class="ob-dots">
+        <div class="ob-dot active"></div><div class="ob-dot"></div><div class="ob-dot"></div><div class="ob-dot"></div>
+      </div>
+      <button class="ob-next" id="ob-next-0">次へ →</button>
+    </div>
+    <!-- スライド1：作成 -->
+    <div class="ob-slide ob-slide-how">
+      <div class="ob-step-icon">✏️</div>
+      <div class="ob-step-num">Step 1</div>
+      <div class="ob-step-title">イベントを<br>作成する</div>
+      <div class="ob-step-desc">イベント名・候補日を選んで作成。参加者の名前を事前登録すると、回答がもっとかんたんになります。</div>
+      <div class="ob-dots">
+        <div class="ob-dot"></div><div class="ob-dot active"></div><div class="ob-dot"></div><div class="ob-dot"></div>
+      </div>
+      <button class="ob-next" id="ob-next-1">次へ →</button>
+      <button class="ob-skip" id="ob-skip-1">スキップ</button>
+    </div>
+    <!-- スライド2：参加 -->
+    <div class="ob-slide ob-slide-how">
+      <div class="ob-step-icon">🙋</div>
+      <div class="ob-step-num">Step 2</div>
+      <div class="ob-step-title">IDを共有して<br>回答してもらう</div>
+      <div class="ob-step-desc">発行された6文字のIDをLINEで共有。参加者はIDを入力して○△×で回答するだけ。</div>
+      <div class="ob-dots">
+        <div class="ob-dot"></div><div class="ob-dot"></div><div class="ob-dot active"></div><div class="ob-dot"></div>
+      </div>
+      <button class="ob-next" id="ob-next-2">次へ →</button>
+      <button class="ob-skip" id="ob-skip-2">スキップ</button>
+    </div>
+    <!-- スライド3：スタート -->
+    <div class="ob-slide ob-slide-start">
+      <div class="ob-start-icon">📊</div>
+      <div class="ob-start-title">最適日を<br>自動で提案</div>
+      <div class="ob-start-desc">回答が集まったら集計表・グラフで確認。VIP参加者の重み付けで、本当に大切な人を優先した最適日を提案します。</div>
+      <button class="ob-start-btn" id="ob-start-btn">はじめる</button>
+      <div class="ob-dots">
+        <div class="ob-dot"></div><div class="ob-dot"></div><div class="ob-dot"></div><div class="ob-dot active"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="header">
   <div class="header-inner">
-    <div class="logo">にち<span>かん</span></div>
-    <div class="header-sub">みんなの日程を、かしこく調整</div>
+    <div>
+      <div class="logo">にち<span>かん</span></div>
+      <div class="header-sub">みんなの日程を、かしこく調整</div>
+    </div>
+    <div class="demo-badge">LIVE</div>
   </div>
 </div>
 <div class="main">
+
+  <!-- ホーム -->
   <div id="screen-home" class="screen active">
-    <div class="home-hero"><h1>日程調整を<br>かんたんに</h1><p>IDを共有するだけ。<br>リアルタイム集計。</p></div>
-    <div class="home-buttons">
-      <button class="home-btn" data-screen="create"><div class="home-btn-icon">✏️</div><div class="home-btn-label">作成する</div><div class="home-btn-desc">イベントを立てる</div></button>
-      <button class="home-btn" data-screen="join"><div class="home-btn-icon">🙋</div><div class="home-btn-label">参加する</div><div class="home-btn-desc">IDで参加・回答</div></button>
-      <button class="home-btn" data-screen="result-entry"><div class="home-btn-icon">📊</div><div class="home-btn-label">集計を見る</div><div class="home-btn-desc">リアルタイム集計</div></button>
-      <button class="home-btn" data-screen="admin-entry"><div class="home-btn-icon">⚙️</div><div class="home-btn-label">管理する</div><div class="home-btn-desc">重要度を設定</div></button>
+    <div class="home-hero">
+      <div class="home-hero-label">SCHEDULE OPTIMIZER</div>
+      <h1>日程調整を<br>かしこく。</h1>
+      <p>あなたの役割を選んでください。</p>
+    </div>
+    <div class="demo-note">🔥 Firebase リアルタイム同期</div>
+
+    <!-- 役割選択 -->
+    <div class="role-select">
+      <button class="role-btn role-host" id="btn-role-host">
+        <div class="role-icon">🎯</div>
+        <div class="role-label">主催者</div>
+        <div class="role-desc">イベントを作成・管理する</div>
+        <div class="role-features">
+          <span>✏️ 作成</span>
+          <span>⚙️ 優先度設定</span>
+          <span>✅ 日程確定</span>
+          <span>📋 一覧</span>
+        </div>
+      </button>
+      <button class="role-btn role-guest" id="btn-role-guest">
+        <div class="role-icon">🙋</div>
+        <div class="role-label">参加者</div>
+        <div class="role-desc">IDで参加して回答する</div>
+        <div class="role-features">
+          <span>○△× 回答</span>
+          <span>📊 集計確認</span>
+          <span>💬 コメント</span>
+        </div>
+      </button>
+    </div>
+
+    <!-- デモデータ -->
+    <div style="margin-top:20px;text-align:center;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button id="btn-load-demo" class="btn-demo-seed" style="display:none">
+        <span style="font-size:14px">🎲</span>
+        <span>デモデータを読み込む</span>
+      </button>
     </div>
   </div>
+
+  <!-- 主催者メニュー -->
+  <div id="screen-host" class="screen">
+    <button class="back-btn" data-screen="home">← ホームへ</button>
+    <div class="role-header host">
+      <span class="role-header-icon">🎯</span>
+      <span class="role-header-label">主催者メニュー</span>
+    </div>
+    <div class="home-buttons">
+      <button class="home-btn" data-screen="create"><div class="home-btn-icon">✏️</div><div class="home-btn-label">作成する</div><div class="home-btn-desc">イベントを立てる</div></button>
+      <button class="home-btn" data-screen="admin-entry"><div class="home-btn-icon">⚙️</div><div class="home-btn-label">管理する</div><div class="home-btn-desc">優先度・回答状況</div></button>
+      <button class="home-btn" id="btn-host-result"><div class="home-btn-icon">📊</div><div class="home-btn-label">集計・確定</div><div class="home-btn-desc">全データ確認・日程確定</div></button>
+      <button class="home-btn" data-screen="event-list"><div class="home-btn-icon">📋</div><div class="home-btn-label">イベント一覧</div><div class="home-btn-desc">作成済みを確認</div></button>
+    </div>
+  </div>
+
+  <!-- 参加者メニュー -->
+  <div id="screen-guest" class="screen">
+    <button class="back-btn" data-screen="home">← ホームへ</button>
+    <div class="role-header guest">
+      <span class="role-header-icon">🙋</span>
+      <span class="role-header-label">参加者メニュー</span>
+    </div>
+    <div class="home-buttons">
+      <button class="home-btn" data-screen="join"><div class="home-btn-icon">○△×</div><div class="home-btn-label">回答する</div><div class="home-btn-desc">IDで参加・回答</div></button>
+      <button class="home-btn" id="btn-guest-result"><div class="home-btn-icon">📊</div><div class="home-btn-label">集計を見る</div><div class="home-btn-desc">結果・最適日確認</div></button>
+    </div>
+    <div class="note" style="margin-top:12px">主催者からIDを受け取って入力してください。優先度設定は主催者のみが確認できます。</div>
+  </div>
+
+  <!-- 作成 -->
   <div id="screen-create" class="screen">
     <button class="back-btn" data-screen="home">← ホームへ</button>
     <div class="card">
       <div class="card-title">イベント情報</div>
       <div class="form-group"><label class="form-label">イベント名 *</label><input class="form-input" id="create-name" placeholder="例：7月の飲み会" maxlength="40"></div>
       <div class="form-group"><label class="form-label">メモ（任意）</label><input class="form-input" id="create-memo" placeholder="例：渋谷近辺で考えています"></div>
+      <div class="form-group"><label class="form-label">回答締め切り日（任意）</label><input class="form-input" id="create-deadline" type="date" style="font-family:var(--font-mono)"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">参加者を登録（任意）</div>
+      <div class="note">名前を登録すると、回答時に選ぶだけになります。</div>
+      <div class="member-input-row">
+        <input class="form-input" id="member-input" placeholder="名前を入力" maxlength="20">
+        <button class="member-add-btn" id="btn-add-member">＋</button>
+      </div>
+      <div class="member-tags" id="member-tags"></div>
     </div>
     <div class="card">
       <div class="card-title">候補日を選択</div>
@@ -132,32 +494,57 @@
     </div>
     <button class="btn btn-primary" id="btn-create-event">イベントを作成する</button>
   </div>
+
+  <!-- 作成完了 -->
   <div id="screen-created" class="screen">
     <div class="event-id-display">
       <div class="event-id-label">イベントID</div>
       <div class="event-id-value" id="created-id-display">----</div>
       <button class="event-id-copy" id="btn-copy-id">IDをコピー</button>
     </div>
-    <div class="note">このIDを参加者に共有してください。</div>
+    <div class="note">このIDを参加者に伝えてください。「参加する」からIDを入力して回答できます。</div>
     <div class="card"><div id="created-summary"></div></div>
-    <button class="btn btn-primary" id="btn-go-admin" style="margin-bottom:10px">重要度を設定する（任意）</button>
+    <button class="btn btn-primary" id="btn-go-result" style="margin-bottom:10px">集計を見る</button>
     <button class="btn btn-secondary" data-screen="home">ホームへ戻る</button>
   </div>
+
+  <!-- 参加 -->
   <div id="screen-join" class="screen">
     <button class="back-btn" data-screen="home">← ホームへ</button>
     <div class="card">
       <div class="card-title">IDで参加</div>
       <div class="form-group"><label class="form-label">イベントID（6文字）</label><input class="form-input id-input-big" id="join-id" placeholder="ABCD12" maxlength="6"></div>
-      <div class="form-group"><label class="form-label">あなたの名前</label><input class="form-input" id="join-name" placeholder="例：山田太郎"></div>
+      <div id="join-name-section">
+        <div class="form-group"><label class="form-label">あなたの名前</label><input class="form-input" id="join-name" placeholder="例：山田太郎"></div>
+      </div>
       <button class="btn btn-primary" id="btn-join-event">参加する</button>
     </div>
   </div>
+
+  <!-- 回答 -->
   <div id="screen-answer" class="screen">
     <button class="back-btn" data-screen="join">← 戻る</button>
     <div class="card" id="answer-event-info"></div>
-    <div class="card"><div class="card-title">回答（○△×）</div><div id="answer-dates"></div></div>
+
+    <!-- ○△×定義 -->
+    <div class="answer-legend">
+      <div class="legend-item legend-ok"><span class="legend-mark">○</span><span class="legend-text">参加できる</span></div>
+      <div class="legend-item legend-maybe"><span class="legend-mark">△</span><span class="legend-text">未定・調整次第</span></div>
+      <div class="legend-item legend-no"><span class="legend-mark">×</span><span class="legend-text">参加できない</span></div>
+    </div>
+
+    <div class="card"><div class="card-title">日程を回答</div><div id="answer-dates"></div></div>
+
+    <!-- コメント欄 -->
+    <div class="card">
+      <div class="card-title">コメント（任意）</div>
+      <textarea class="form-input" id="answer-comment" placeholder="例：17時以降なら調整できます、場所は渋谷が助かります…" rows="3" style="resize:none;line-height:1.6"></textarea>
+    </div>
+
     <button class="btn btn-primary" id="btn-submit-answer">回答を送信する</button>
   </div>
+
+  <!-- 集計入口 -->
   <div id="screen-result-entry" class="screen">
     <button class="back-btn" data-screen="home">← ホームへ</button>
     <div class="card">
@@ -166,75 +553,273 @@
       <button class="btn btn-primary" id="btn-load-result">集計を表示</button>
     </div>
   </div>
+
+  <!-- 集計 -->
   <div id="screen-result" class="screen">
     <button class="back-btn" data-screen="result-entry">← 戻る</button>
     <div class="card" id="result-event-info"></div>
+
+    <!-- 未回答状況 -->
+    <div class="card" id="result-pending-card" style="display:none">
+      <div class="card-title">回答状況</div>
+      <div id="result-pending"></div>
+    </div>
+
     <div class="tabs">
       <button class="tab active" data-tab="table" id="tab-table">集計表</button>
       <button class="tab" data-tab="chart" id="tab-chart">グラフ</button>
       <button class="tab" data-tab="best" id="tab-best">最適日</button>
+      <button class="tab" data-tab="comments" id="tab-comments">コメント</button>
+      <button class="tab tab-host-only" data-tab="admin-inline" id="tab-admin-inline" style="display:none">⚙️管理</button>
     </div>
-    <div id="result-tab-table"><div class="card"><div class="card-title">○△×集計</div><div id="result-table-content"><div class="loading">読み込み中</div></div></div></div>
-    <div id="result-tab-chart" style="display:none"><div class="card"><div class="card-title">参加可能人数（○）</div><div class="chart-wrap"><canvas id="result-chart"></canvas></div></div></div>
-    <div id="result-tab-best" style="display:none"><div class="card"><div class="card-title">最適日提案</div><div id="result-best-content"></div></div></div>
+    <div id="result-tab-table">
+      <div class="card"><div class="card-title">○△× 集計 + ヒートマップ</div><div id="result-table-content"></div></div>
+    </div>
+    <div id="result-tab-chart" style="display:none">
+      <div class="card"><div class="card-title">参加可能人数（○）</div><div class="chart-wrap"><canvas id="result-chart"></canvas></div></div>
+      <div class="card"><div class="card-title">参加率（○△×比率）</div><div class="chart-wrap"><canvas id="result-chart-ratio"></canvas></div></div>
+    </div>
+    <div id="result-tab-best" style="display:none">
+      <div class="card"><div class="card-title">最適日提案</div><div id="result-best-content"></div></div>
+      <div class="card" id="result-decision-card" style="display:none">
+        <div class="card-title">日程を確定する</div>
+        <div class="note">タップした日付が確定日として表示されます。</div>
+        <div id="result-decision-content"></div>
+      </div>
+      <div class="card"><div class="card-title">結果をシェア</div>
+        <button class="btn btn-secondary" id="btn-copy-result" style="font-family:var(--font-mono);font-size:11px;letter-spacing:1px">📋 結果をテキストでコピー</button>
+      </div>
+    </div>
+    <div id="result-tab-comments" style="display:none"><div class="card"><div class="card-title">コメント一覧</div><div id="result-comments-content"></div></div></div>
+    <!-- 主催者専用：管理タブ（優先度・回答状況） -->
+    <div id="result-tab-admin-inline" style="display:none">
+      <div class="card">
+        <div class="card-title">回答状況</div>
+        <div id="inline-pending"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">優先度設定</div>
+        <div class="note">🔴 必須：×の日を除外　🟡 重要：スコア3倍　⚪ 一般：通常<br>※参加者には表示されません</div>
+        <div id="inline-participants"></div>
+        <div class="divider"></div>
+        <button class="btn btn-primary" id="btn-save-inline-admin" style="font-family:var(--font-mono);font-size:11px;letter-spacing:1px">優先度を保存する</button>
+      </div>
+    </div>
+
+    <div style="margin-top:8px">
+      <button class="btn btn-danger" id="btn-reset-event">このイベントをリセット</button>
+    </div>
   </div>
+
+  <!-- イベント一覧 -->
+  <div id="screen-event-list" class="screen">
+    <button class="back-btn" data-screen="home">← ホームへ</button>
+    <div class="card">
+      <div class="card-title">作成済みイベント</div>
+      <div id="event-list-content"></div>
+    </div>
+    <button class="btn btn-danger" id="btn-clear-all" style="margin-top:4px">全データを削除</button>
+  </div>
+
+  <!-- 管理画面入口 -->
   <div id="screen-admin-entry" class="screen">
     <button class="back-btn" data-screen="home">← ホームへ</button>
     <div class="card">
-      <div class="card-title">管理者ログイン</div>
-      <div class="note">管理者パスワードは作成時に表示されたものです。</div>
+      <div class="card-title">管理する</div>
+      <div class="note">管理したいイベントのIDを入力してください。</div>
       <div class="form-group"><label class="form-label">イベントID</label><input class="form-input id-input-big" id="admin-id-input" placeholder="ABCD12" maxlength="6"></div>
-      <div class="form-group"><label class="form-label">管理者パスワード</label><input class="form-input" id="admin-pass-input" type="password"></div>
-      <button class="btn btn-primary" id="btn-login-admin">管理画面へ</button>
+      <button class="btn btn-primary" id="btn-open-admin">管理画面へ</button>
     </div>
   </div>
+
+  <!-- 管理画面 -->
   <div id="screen-admin" class="screen">
     <button class="back-btn" data-screen="home">← ホームへ</button>
     <div class="card" id="admin-event-info"></div>
+    <!-- 回答状況 -->
+    <div class="card" id="admin-pending-card">
+      <div class="card-title">回答状況</div>
+      <div id="admin-pending"></div>
+    </div>
+    <!-- 優先度設定 -->
     <div class="card">
-      <div class="card-title">参加者の重要度設定</div>
-      <div class="note">🔴 必須：×の日を除外<br>🟡 重要：スコア3倍<br>⚪ 一般：通常<br>※参加者には表示されません</div>
+      <div class="card-title">参加者の優先度設定</div>
+      <div class="note">🔴 必須：×の日を候補から除外<br>🟡 重要：スコアが3倍になる<br>⚪ 一般：通常カウント<br>※参加者には表示されません</div>
       <div id="admin-participants"></div>
       <div class="divider"></div>
-      <button class="btn btn-primary" id="btn-save-admin">重要度を保存する</button>
+      <button class="btn btn-primary" id="btn-save-admin">優先度を保存する</button>
     </div>
   </div>
+
 </div>
 <div class="toast" id="toast"></div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, set, get, update, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+<!-- ウォークスルー -->
+<div id="walkthrough" class="wt-overlay" style="display:none">
+  <div class="wt-backdrop"></div>
+  <div class="wt-box" id="wt-box">
+    <div class="wt-step" id="wt-step"></div>
+    <div class="wt-title" id="wt-title"></div>
+    <div class="wt-desc" id="wt-desc"></div>
+    <div class="wt-footer">
+      <span class="wt-progress" id="wt-progress"></span>
+      <div style="display:flex;gap:8px">
+        <button class="wt-btn-skip" id="wt-skip">スキップ</button>
+        <button class="wt-btn-next" id="wt-next">次へ →</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-const _app = initializeApp({
-  apiKey: "AIzaSyBi8T1eiSrFt4Cvqg8Cc1P6nmob-hpOSrs",
-  authDomain: "nichikan-7788c.firebaseapp.com",
-  databaseURL: "https://nichikan-7788c-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "nichikan-7788c",
-  storageBucket: "nichikan-7788c.firebasestorage.app",
-  messagingSenderId: "332427860675",
-  appId: "1:332427860675:web:d6ba6e6226ca9c4246e076"
+<!-- スコア内訳ポップアップ -->
+<div id="score-popup" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:8500;align-items:flex-end;justify-content:center">
+  <div class="score-popup-backdrop" id="score-popup-backdrop"></div>
+  <div class="score-popup-box">
+    <div class="score-popup-handle"></div>
+    <div class="score-popup-title">SCORE BREAKDOWN</div>
+    <div class="score-popup-date" id="score-popup-date"></div>
+    <div id="score-popup-rows"></div>
+    <div class="score-popup-formula" id="score-popup-formula"></div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+
+// ===== オンボーディング =====
+(function(){
+  // 2回目以降はスキップ
+  // 本番は毎回スプラッシュを表示
+  let current=0;
+  const slides=$('ob-slides');
+  const total=4;
+
+  function goSlide(n){
+    current=Math.max(0,Math.min(n,total-1));
+    slides.style.transform=`translateX(-${current*25}%)`;
+    // ステップアイコンアニメーション再発火
+    slides.querySelectorAll('.ob-step-icon,.ob-start-icon').forEach(el=>{
+      el.style.animation='none';
+      el.offsetHeight;
+      el.style.animation='';
+    });
+  }
+
+  function finish(){
+    localStorage.setItem('nichikan_ob_done_prod','1');
+    const ob=$('onboarding');
+    ob.style.transition='opacity .4s';
+    ob.style.opacity='0';
+    setTimeout(()=>ob.classList.add('hidden'),400);
+  }
+
+  // スプラッシュ：2秒後に自動で次へ
+  setTimeout(()=>goSlide(1),2000);
+
+  $('ob-next-0').addEventListener('click',()=>goSlide(1));
+  $('ob-next-1').addEventListener('click',()=>goSlide(2));
+  $('ob-next-2').addEventListener('click',()=>goSlide(3));
+  $('ob-skip-1').addEventListener('click',finish);
+  $('ob-skip-2').addEventListener('click',finish);
+  $('ob-start-btn').addEventListener('click',finish);
+
+  // スワイプ対応
+  let startX=0;
+  slides.addEventListener('touchstart',e=>startX=e.touches[0].clientX,{passive:true});
+  slides.addEventListener('touchend',e=>{
+    const diff=startX-e.changedTouches[0].clientX;
+    if(Math.abs(diff)>50){
+      if(diff>0&&current<total-1)goSlide(current+1);
+      else if(diff<0&&current>0)goSlide(current-1);
+    }
+  },{passive:true});
+})();
+
+function go(name){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});document.getElementById('screen-'+name).classList.add('active');window.scrollTo(0,0)}
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}
+
+// ホームのボタンは通常scriptで登録（Firebase不要）
+document.addEventListener('DOMContentLoaded', function(){
+  document.getElementById('btn-role-host').addEventListener('click',function(){window._state&&(window._state.role='host');go('host')});
+  document.getElementById('btn-role-guest').addEventListener('click',function(){window._state&&(window._state.role='guest');go('guest')});
+  document.querySelectorAll('[data-screen]').forEach(function(el){
+    el.addEventListener('click',function(){
+      if(el.dataset.screen==='event-list'&&window.renderEventList)window.renderEventList();
+      go(el.dataset.screen);
+    });
+  });
 });
-const _db = getDatabase(_app);
-
-let state = {
-  eventId:null, eventData:null, joinName:null, answerChoices:{},
-  calYear:new Date().getFullYear(), calMonth:new Date().getMonth(),
-  selectedDates:[], adminToken:null, resultUnsub:null, chart:null
-};
+</script><script type="module">
 
 const $=id=>document.getElementById(id);
-function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
-function go(name){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$('screen-'+name).classList.add('active');window.scrollTo(0,0)}
+let _db=null, _ref=null, _set=null, _get=null;
+
+// Firebaseを非同期で読み込み（UIをブロックしない）
+Promise.all([
+  import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'),
+  import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js')
+]).then(function(modules){
+  const {initializeApp}=modules[0];
+  const fb=modules[1];
+  _ref=fb.ref; _set=fb.set; _get=fb.get;
+  const _app=initializeApp({
+    apiKey:"AIzaSyBi8T1eiSrFt4Cvqg8Cc1P6nmob-hpOSrs",
+    authDomain:"nichikan-7788c.firebaseapp.com",
+    databaseURL:"https://nichikan-7788c-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:"nichikan-7788c",
+    storageBucket:"nichikan-7788c.firebasestorage.app",
+    messagingSenderId:"332427860675",
+    appId:"1:332427860675:web:d6ba6e6226ca9c4246e076"
+  });
+  _db=fb.getDatabase(_app);
+  console.log('Firebase ready');
+}).catch(function(e){console.error('Firebase load error',e)});
+
+async function getEvent(id){
+  if(!_db){toast('通信準備中…少しお待ちください');return null}
+  try{const snap=await _get(_ref(_db,'events/'+id));return snap.exists()?snap.val():null;}catch(e){return null}
+}
+async function saveEvent(data){
+  if(!_db){toast('通信準備中…少しお待ちください');return}
+  try{await _set(_ref(_db,'events/'+data.id),data);}catch(e){toast('保存失敗')}
+}
+
+
+
+
 function genId(){const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return Array.from({length:6},()=>c[Math.floor(Math.random()*c.length)]).join('')}
-function genPass(){return Math.floor(100000+Math.random()*900000).toString()}
 function fmt(s){const[y,m,d]=s.split('-').map(Number);const dw=['日','月','火','水','木','金','土'];return`${m}/${d}（${dw[new Date(y,m-1,d).getDay()]}）`}
 
+// ===== localStorage DB =====
+
+let state={
+  eventId:null,eventData:null,joinName:null,answerChoices:{},
+  calYear:new Date().getFullYear(),calMonth:new Date().getMonth(),
+  selectedDates:[],members:[],chart:null,chartRatio:null,resultSummary:null,
+  role:null // 'host' or 'guest'
+};
+
+// ===== 参加者登録 =====
+function addMember(){
+  const val=$('member-input').value.trim();
+  if(!val)return;
+  if(state.members.includes(val)){toast('同じ名前がすでにあります');return}
+  state.members.push(val);$('member-input').value='';renderMemberTags();
+}
+function removeMember(name){state.members=state.members.filter(m=>m!==name);renderMemberTags()}
+function renderMemberTags(){
+  $('member-tags').innerHTML=state.members.map(m=>
+    `<div class="member-tag">${m}<span class="member-tag-remove" data-name="${m}">×</span></div>`
+  ).join('');
+  $('member-tags').querySelectorAll('.member-tag-remove').forEach(el=>el.addEventListener('click',()=>removeMember(el.dataset.name)));
+}
+
+// ===== カレンダー =====
 function renderCal(){
   const y=state.calYear,m=state.calMonth;
   $('cal-month-label').textContent=`${y}年${m+1}月`;
   const dows=['日','月','火','水','木','金','土'];
-  let html=dows.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  let html=dows.map(function(d){return'<div class="cal-dow">'+d+'</div>'}).join('');
   const first=new Date(y,m,1).getDay(),last=new Date(y,m+1,0).getDate();
   const today=new Date();today.setHours(0,0,0,0);
   for(let i=0;i<first;i++)html+='<div></div>';
@@ -247,97 +832,201 @@ function renderCal(){
     html+=`<div class="${cls}" data-date="${ds}">${d}</div>`;
   }
   $('cal-grid').innerHTML=html;
-  $('cal-grid').querySelectorAll('[data-date]').forEach(el=>el.addEventListener('click',()=>toggleDate(el.dataset.date)));
-  renderTags();
-}
-function toggleDate(ds){
-  const i=state.selectedDates.indexOf(ds);
-  if(i>=0)state.selectedDates.splice(i,1);else state.selectedDates.push(ds);
-  state.selectedDates.sort();renderCal();
-}
-function renderTags(){
-  const w=$('date-tags');
-  w.innerHTML=state.selectedDates.map(d=>`<div class="date-tag">${fmt(d)}<span class="date-tag-remove" data-date="${d}">×</span></div>`).join('');
-  w.querySelectorAll('.date-tag-remove').forEach(el=>el.addEventListener('click',()=>toggleDate(el.dataset.date)));
+  $('cal-grid').querySelectorAll('[data-date]').forEach(el=>el.addEventListener('click',()=>{
+    const i=state.selectedDates.indexOf(el.dataset.date);
+    if(i>=0)state.selectedDates.splice(i,1);else state.selectedDates.push(el.dataset.date);
+    state.selectedDates.sort();renderCal();
+  }));
+  $('date-tags').innerHTML=state.selectedDates.map(function(d){return'<div class="date-tag">'+fmt(d)+'<span class="date-tag-remove" data-date="'+d+'">×</span></div>'}).join('');
+  $('date-tags').querySelectorAll('.date-tag-remove').forEach(el=>el.addEventListener('click',()=>{
+    state.selectedDates=state.selectedDates.filter(d=>d!==el.dataset.date);renderCal();
+  }));
 }
 
+// ===== イベント作成 =====
 async function createEvent(){
   const name=$('create-name').value.trim();
   if(!name){toast('イベント名を入力してください');return}
   if(!state.selectedDates.length){toast('候補日を選択してください');return}
-  const id=genId(),pass=genPass();
-  const data={id,name,memo:$('create-memo').value.trim(),dates:state.selectedDates,createdAt:Date.now(),adminPass:pass,priorities:{},answers:{}};
-  try{
-    await set(ref(_db,`events/${id}`),data);
-    state.eventId=id;state.eventData=data;state.adminToken=pass;
-    $('created-id-display').textContent=id;
-    $('created-summary').innerHTML=`
-      <div style="font-size:18px;font-weight:800;margin-bottom:4px">${name}</div>
-      ${data.memo?`<div style="font-size:13px;color:var(--text2);margin-bottom:10px">${data.memo}</div>`:''}
-      <div style="font-size:12px;color:var(--text2)">候補日 ${state.selectedDates.length}件</div>
-      <div class="date-tags" style="margin-top:8px">${state.selectedDates.map(d=>`<div class="date-tag">${fmt(d)}</div>`).join('')}</div>
-      <div class="divider"></div>
-      <div style="font-size:12px;color:var(--text2)">管理者パスワード</div>
-      <div style="font-size:20px;font-weight:800;letter-spacing:4px;color:var(--accent)">${pass}</div>
-      <div style="font-size:11px;color:var(--text2);margin-top:4px">※必ずメモしてください</div>`;
-    go('created');
-  }catch(e){toast('作成失敗: '+e.message);console.error(e)}
+  const id=genId();
+  const data={
+    id,name,memo:$('create-memo').value.trim(),
+    dates:state.selectedDates,members:state.members.length>0?[...state.members]:[],
+    deadline:$('create-deadline').value||'',
+    createdAt:Date.now(),priorities:{},answers:{}
+  };
+  await saveEvent(data);
+  state.eventId=id;state.eventData=data;
+  $('created-id-display').textContent=id;
+  $('created-summary').innerHTML=`
+    <div style="font-size:18px;font-weight:800;margin-bottom:4px">${name}</div>
+    ${data.memo?'<div style="font-size:13px;color:var(--text2);margin-bottom:10px">'+data.memo+'</div>':''}
+    <div style="font-size:12px;color:var(--text2)">候補日 ${state.selectedDates.length}件${state.members.length>0?' ／ 参加者 '+state.members.length+'人':''}</div>
+    <div class="date-tags" style="margin-top:8px">${state.selectedDates.map(function(d){return'<div class="date-tag">'+fmt(d)+'</div>'}).join('')}</div>`;
+  // リセット
+  state.selectedDates=[];state.members=[];
+  $('create-name').value='';$('create-memo').value='';
+  renderMemberTags();renderCal();
+  go('created');
+}
+
+// ===== 参加・回答 =====
+function applyExistingAnswer(name){
+  const data=state.eventData;
+  if(!data)return;
+  const key=name.replace(/[.#$[\]]/g,'_');
+  // answersのキーは日本語名そのままの場合もあるので両方試す
+  const existing=(data.answers||{})[key]||(data.answers||{})[name];
+  const w=$('answer-dates');
+  if(!w)return;
+  if(existing&&existing.answers){
+    state.answerChoices={...existing.answers};
+    Object.entries(state.answerChoices).forEach(([date,val])=>{
+      w.querySelectorAll('[data-date="'+date+'"]').forEach(function(b){
+        b.className='ans-btn'+(b.dataset.val===val?' active-'+val:'');
+      });
+    });
+    const commentEl=$('answer-comment');
+    if(commentEl)commentEl.value=existing.comment||'';
+    updateAnswerNameBadge(name,true);
+  } else {
+    state.answerChoices={};
+    w.querySelectorAll('.ans-btn').forEach(b=>b.className='ans-btn');
+    const commentEl=$('answer-comment');
+    if(commentEl)commentEl.value='';
+    updateAnswerNameBadge(name,false);
+  }
+}
+
+function updateAnswerNameBadge(name,hasExisting){
+  const badge=$('answer-name-badge');
+  if(!badge)return;
+  badge.innerHTML=`
+    <span class="answer-badge-name">${name}</span>
+    ${hasExisting?'<span class="answer-badge-edit">編集中</span>':'<span class="answer-badge-new">新規回答</span>'}
+  `;
+}
+
+function buildAnswerScreen(data){
+  $('answer-event-info').innerHTML=`
+    <div style="font-family:var(--font-serif);font-size:20px">${data.name}</div>
+    ${data.memo?'<div style="font-size:13px;color:var(--text2);margin-top:4px">'+data.memo+'</div>':''}
+    <div id="answer-name-badge" style="margin-top:10px"></div>`;
+  const w=$('answer-dates');
+  w.innerHTML=data.dates.map(d=>`
+    <div class="answer-date-row">
+      <div class="answer-date-label">${fmt(d)}</div>
+      <div class="answer-btns">
+        <button class="ans-btn" data-date="${d}" data-val="ok">○</button>
+        <button class="ans-btn" data-date="${d}" data-val="maybe">△</button>
+        <button class="ans-btn" data-date="${d}" data-val="no">×</button>
+      </div>
+    </div>`).join('');
+  w.querySelectorAll('.ans-btn').forEach(btn=>btn.addEventListener('click',()=>{
+    const date=btn.dataset.date,val=btn.dataset.val;
+    state.answerChoices[date]=val;
+    w.querySelectorAll('[data-date="'+date+'"]').forEach(function(b){b.className='ans-btn'+(b.dataset.val===val?' active-'+val:'');});
+  }));
 }
 
 async function joinEvent(){
   const id=$('join-id').value.trim().toUpperCase();
-  const name=$('join-name').value.trim();
   if(id.length!==6){toast('IDは6文字です');return}
+  const data=await getEvent(id);
+  if(!data){toast('イベントが見つかりません');return}
+
+  // 名前を取得して保存
+  var joinEl=$('join-name');
+  const name=joinEl?joinEl.value.trim():'';
   if(!name){toast('名前を入力してください');return}
-  try{
-    const snap=await get(ref(_db,`events/${id}`));
-    if(!snap.exists()){toast('イベントが見つかりません');return}
-    const data=snap.val();
-    state.eventId=id;state.eventData=data;state.joinName=name;state.answerChoices={};
-    $('answer-event-info').innerHTML=`<div style="font-size:18px;font-weight:800">${data.name}</div>${data.memo?`<div style="font-size:13px;color:var(--text2);margin-top:4px">${data.memo}</div>`:''}`;
-    const w=$('answer-dates');
-    w.innerHTML=data.dates.map(d=>`
-      <div class="answer-date-row">
-        <div class="answer-date-label">${fmt(d)}</div>
-        <div class="answer-btns">
-          <button class="ans-btn" data-date="${d}" data-val="ok">○</button>
-          <button class="ans-btn" data-date="${d}" data-val="maybe">△</button>
-          <button class="ans-btn" data-date="${d}" data-val="no">×</button>
-        </div>
-      </div>`).join('');
-    w.querySelectorAll('.ans-btn').forEach(btn=>btn.addEventListener('click',()=>{
-      const{date,val}=btn.dataset;
-      state.answerChoices[date]=val;
-      w.querySelectorAll(`.ans-btn[data-date="${date}"]`).forEach(b=>b.className='ans-btn'+(b.dataset.val===val?` active-${val}`:''));
-    }));
-    go('answer');
-  }catch(e){toast('読み込み失敗');console.error(e)}
+
+  state.eventId=id;state.eventData=data;state.joinName=name;state.answerChoices={};
+
+  // 回答画面を構築
+  buildAnswerScreen(data);
+
+  // go後に復元
+  go('answer');
+  applyExistingAnswer(name);
 }
 
 async function submitAnswer(){
+  var joinEl=$('join-name');
+  const name=joinEl?joinEl.value.trim():'';
+  if(!name){toast('名前を入力してください');return}
   const unanswered=state.eventData.dates.filter(d=>!state.answerChoices[d]);
   if(unanswered.length){toast('全日付に回答してください');return}
-  const key=state.joinName.replace(/[.#$[\]]/g,'_');
-  try{
-    await set(ref(_db,`events/${state.eventId}/answers/${key}`),{name:state.joinName,answers:state.answerChoices,answeredAt:Date.now()});
-    toast('回答を送信しました！');go('home');
-  }catch(e){toast('送信失敗');console.error(e)}
+  const key=name.replace(/[.#$[\]]/g,'_');
+  const comment=($('answer-comment')&&$('answer-comment').value.trim())||'';
+  const data=await getEvent(state.eventId);
+  if(!data){toast('イベントが見つかりません');return}
+  data.answers=data.answers||{};
+  data.answers[key]={name,answers:{...state.answerChoices},comment,answeredAt:Date.now()};
+  await saveEvent(data);
+  state.eventData=data;
+  toast('回答を送信しました！');go('home');
 }
 
+// ===== 集計 =====
 async function loadResult(){
   const id=$('result-id-input').value.trim().toUpperCase();
   if(id.length!==6){toast('IDは6文字です');return}
-  if(state.resultUnsub)state.resultUnsub();
-  state.resultUnsub=onValue(ref(_db,`events/${id}`),snap=>{
-    if(!snap.exists()){toast('イベントが見つかりません');return}
-    renderResult(snap.val());
-  });
-  go('result');
+  const data=await getEvent(id);
+  if(!data){toast('イベントが見つかりません');return}
+  state.eventId=id;state.eventData=data;
+  renderResult(data);go('result');
 }
 
 function renderResult(data){
-  $('result-event-info').innerHTML=`<div style="font-size:18px;font-weight:800">${data.name}</div>${data.memo?`<div style="font-size:13px;color:var(--text2);margin-top:4px">${data.memo}</div>`:''}<div style="font-size:12px;color:var(--text2);margin-top:6px">${Object.keys(data.answers||{}).length}人が回答</div>`;
-  const ans=data.answers||{},prio=data.priorities||{},dates=data.dates||[];
+  var isHost=state.role==='host';
+  // 締め切り日バッジ
+  var deadlineBadge='';
+  if(data.deadline){
+    const dl=new Date(data.deadline);dl.setHours(23,59,59);
+    const now=new Date();
+    const diff=Math.ceil((dl-now)/(1000*60*60*24));
+    if(diff<0)deadlineBadge='<span class="deadline-badge expired">⏰ 締め切り済み</span>';
+    else if(diff===0)deadlineBadge='<span class="deadline-badge urgent">⏰ 本日締め切り</span>';
+    else if(diff<=3)deadlineBadge=`<span class="deadline-badge urgent">⏰ 締め切りまで${diff}日</span>`;
+    else if(diff<=7)deadlineBadge=`<span class="deadline-badge soon">📅 締め切りまで${diff}日</span>`;
+    else deadlineBadge=`<span class="deadline-badge ok">📅 締め切り ${data.deadline}</span>`;
+  }
+
+  // 確定バナー
+  var decisionBanner='';
+  if(data.decidedDate){
+    decisionBanner=`<div class="decision-banner"><div class="decision-banner-label">✅ 日程確定</div><div class="decision-banner-date">${fmt(data.decidedDate)}</div></div>`;
+  }
+
+  $('result-event-info').innerHTML=`
+    ${decisionBanner}
+    <div style="font-family:var(--font-serif);font-size:20px">${data.name}</div>
+    ${data.memo?'<div style="font-size:13px;color:var(--text2);margin-top:4px">'+data.memo+'</div>':''}
+    <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-top:6px;letter-spacing:1px">${Object.keys(data.answers||{}).length} RESPONSES</div>
+    ${deadlineBadge}`;
+
+  // 未回答状況
+  const members=data.members||[];
+  const ans=data.answers||{};
+  const answeredNames=Object.values(ans).map(a=>a.name);
+  const pendingCard=$('result-pending-card');
+  if(members.length>0){
+    pendingCard.style.display='block';
+    const pending=members.filter(m=>!answeredNames.includes(m));
+    const answered=members.filter(m=>answeredNames.includes(m));
+    const extra=answeredNames.filter(n=>!members.includes(n));
+    $('result-pending').innerHTML=`
+      <div class="status-bar"><span>MEMBER <strong>${members.length}</strong></span><span>ANSWERED <strong style="color:var(--ok)">${answered.length}</strong> / PENDING <strong style="color:var(--no)">${pending.length}</strong></span></div>
+      <div class="pending-wrap">
+        ${members.map(function(m){return'<span class="pending-chip '+( answeredNames.includes(m)?'answered':'not-answered')+ '">'+(answeredNames.includes(m)?'✓ ':'⏳ ')+m+'</span>'}).join('')}
+        ${extra.map(function(n){return'<span class="pending-chip answered" style="opacity:.6">✓ '+n+'</span>'}).join('')}
+      </div>`;
+  } else {
+    pendingCard.style.display='none';
+  }
+
+  const prio=data.priorities||{},dates=data.dates||[];
+  const totalRespondents=Object.keys(ans).length;
   const scored=dates.map(date=>{
     let ok=0,maybe=0,no=0,score=0,reqFail=false;
     Object.values(ans).forEach(a=>{
@@ -348,85 +1037,598 @@ function renderResult(data){
     return{date,ok,maybe,no,score,reqFail};
   });
   const elig=scored.filter(s=>!s.reqFail),maxScore=Math.max(...elig.map(s=>s.score),0);
-  $('result-table-content').innerHTML=scored.length===0
-    ?'<div style="text-align:center;color:var(--text2);padding:20px">まだ回答がありません</div>'
-    :`<div class="agg-header"><div class="agg-col-date">日付</div><div class="agg-col-votes">○ △ ×</div><div class="agg-col-score">スコア</div></div>`
-    +scored.map(s=>`<div class="agg-row ${!s.reqFail&&s.score===maxScore&&maxScore>0?'best':''}">
-      <div class="agg-col-date">${fmt(s.date)}${!s.reqFail&&s.score===maxScore&&maxScore>0?'<span class="best-badge">最適</span>':''}${s.reqFail?'<span class="pill pill-required" style="margin-left:4px">必須NG</span>':''}</div>
-      <div class="agg-col-votes"><span style="color:var(--ok);font-weight:700">${s.ok}</span> / <span style="color:var(--maybe)">${s.maybe}</span> / <span style="color:var(--no)">${s.no}</span></div>
-      <div class="agg-col-score">${s.reqFail?'—':s.score}</div></div>`).join('');
+
+  // 集計表 + ヒートマップ（参加者にはスコア・NG非表示）
+  // 集計表生成（createElement方式）
+  var tableDiv=$('result-table-content');
+  tableDiv.innerHTML='';
+
+  if(totalRespondents===0){
+    var emptyDiv=document.createElement('div');
+    emptyDiv.style.cssText='text-align:center;color:var(--text3);padding:20px;font-family:var(--font-mono);font-size:11px;letter-spacing:2px';
+    emptyDiv.textContent='NO RESPONSES YET';
+    tableDiv.appendChild(emptyDiv);
+  } else {
+    // ヘッダー
+    var headerDiv=document.createElement('div');
+    headerDiv.className='agg-header';
+    headerDiv.innerHTML=isHost
+      ?'<div class="agg-col-date">DATE</div><div class="agg-col-votes">○ △ ×</div><div class="agg-col-score">SCORE ▸</div>'
+      :'<div class="agg-col-date" style="flex:2">DATE</div><div class="agg-col-votes">○ △ ×</div>';
+    tableDiv.appendChild(headerDiv);
+
+    // 各行
+    scored.forEach(function(s){
+      var total=s.ok+s.maybe+s.no||1;
+      var okPct=Math.round(s.ok/total*100);
+      var maybePct=Math.round(s.maybe/total*100);
+      var isBest=!s.reqFail&&s.score===maxScore&&maxScore>0;
+
+      var row=document.createElement('div');
+      row.className='agg-row'+(isBest&&(!s.reqFail||!isHost)?' best':'');
+
+      // 日付列
+      var dateCol=document.createElement('div');
+      dateCol.className='agg-col-date';
+      dateCol.style.flex='2';
+      var dateText=document.createTextNode(fmt(s.date));
+      dateCol.appendChild(dateText);
+      if(isBest){var bb=document.createElement('span');bb.className='best-badge';bb.textContent=isHost?'BEST':'おすすめ';dateCol.appendChild(bb);}
+      if(isHost&&s.reqFail){var ng=document.createElement('span');ng.className='pill-required';ng.style.marginLeft='4px';ng.textContent='NG';dateCol.appendChild(ng);}
+      // ヒートマップバー
+      var bar=document.createElement('div');
+      bar.style.cssText='display:flex;height:4px;border-radius:2px;overflow:hidden;margin-top:5px;gap:1px';
+      var b1=document.createElement('div');b1.style.cssText='width:'+okPct+'%;background:var(--ok);border-radius:2px;transition:width .4s';
+      var b2=document.createElement('div');b2.style.cssText='width:'+maybePct+'%;background:var(--maybe);border-radius:2px;transition:width .4s';
+      var b3=document.createElement('div');b3.style.cssText='flex:1;background:var(--no-bg);border-radius:2px';
+      bar.appendChild(b1);bar.appendChild(b2);bar.appendChild(b3);
+      dateCol.appendChild(bar);
+      row.appendChild(dateCol);
+
+      // 投票列
+      var votesCol=document.createElement('div');
+      votesCol.className='agg-col-votes';
+      votesCol.innerHTML='<span style="color:var(--ok);font-weight:700">'+s.ok+'</span> / <span style="color:var(--maybe)">'+s.maybe+'</span> / <span style="color:var(--no)">'+s.no+'</span>';
+      row.appendChild(votesCol);
+
+      // スコア列（主催者のみ）
+      if(isHost){
+        var scoreCol=document.createElement('div');
+        scoreCol.className='agg-col-score';
+        scoreCol.textContent=s.reqFail?'—':s.score;
+        // タップイベントを直接登録
+        (function(date){
+          scoreCol.addEventListener('click',function(e){
+            e.stopPropagation();
+            showScorePopup(date,data);
+          });
+          row.addEventListener('click',function(){
+            showScorePopup(date,data);
+          });
+        })(s.date);
+        row.appendChild(scoreCol);
+      }
+
+      tableDiv.appendChild(row);
+    });
+  }
+
+  // ○グラフ
   if(state.chart)state.chart.destroy();
+  var chartBg=scored.map(function(s){return s.reqFail?'rgba(128,128,128,.15)':(!s.reqFail&&s.score===maxScore&&maxScore>0?'rgba(201,168,76,.85)':'rgba(201,168,76,.3)')});
+  var chartBorder=scored.map(function(s){return s.reqFail?'transparent':(!s.reqFail&&s.score===maxScore&&maxScore>0?'rgba(201,168,76,1)':'rgba(201,168,76,.5)')});
   state.chart=new Chart($('result-chart').getContext('2d'),{
     type:'bar',
-    data:{labels:scored.map(s=>fmt(s.date)),datasets:[{label:'○',data:scored.map(s=>s.ok),backgroundColor:scored.map(s=>s.reqFail?'#eee':(!s.reqFail&&s.score===maxScore&&maxScore>0?'#2E7D32':'#81C784')),borderRadius:6}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}},x:{ticks:{font:{size:10}}}}}
+    data:{
+      labels:scored.map(function(s){return fmt(s.date)}),
+      datasets:[{label:'○',data:scored.map(function(s){return s.ok}),backgroundColor:chartBg,borderColor:chartBorder,borderWidth:1,borderRadius:4}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,color:'rgba(128,120,100,.6)'},grid:{color:'rgba(128,120,100,.08)'}},x:{ticks:{color:'rgba(128,120,100,.6)'},grid:{display:false}}}}
   });
+
+  // 参加率グラフ（積み上げ棒）
+  if(state.chartRatio)state.chartRatio.destroy();
+  state.chartRatio=new Chart($('result-chart-ratio').getContext('2d'),{
+    type:'bar',
+    data:{
+      labels:scored.map(function(s){return fmt(s.date)}),
+      datasets:[
+        {label:'○',data:scored.map(function(s){return s.ok}),backgroundColor:'rgba(45,212,160,.7)',borderRadius:0},
+        {label:'△',data:scored.map(function(s){return s.maybe}),backgroundColor:'rgba(245,166,35,.7)',borderRadius:0},
+        {label:'×',data:scored.map(function(s){return s.no}),backgroundColor:'rgba(240,92,110,.5)',borderRadius:0}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,labels:{color:'rgba(128,120,100,.8)',font:{size:10},boxWidth:12}}},
+      scales:{
+        x:{stacked:true,ticks:{color:'rgba(128,120,100,.6)'},grid:{display:false}},
+        y:{stacked:true,beginAtZero:true,ticks:{stepSize:1,color:'rgba(128,120,100,.6)'},grid:{color:'rgba(128,120,100,.08)'}}
+      }
+    }
+  });
+
+  // 最適日（参加者にはスコア非表示）
   const best=elig.length>0?elig.reduce((a,b)=>a.score>b.score?a:b):null;
+  var bestScoreLine=isHost?'<div style="font-family:var(--font-mono);font-size:11px;color:var(--text2);margin-top:10px;letter-spacing:1px">SCORE '+best.score+' ｜ ○'+best.ok+' △'+best.maybe+' ×'+best.no+'</div>':'<div style="font-family:var(--font-mono);font-size:11px;color:var(--text2);margin-top:10px;letter-spacing:1px">○'+best.ok+' △'+best.maybe+' ×'+best.no+'</div>';
   $('result-best-content').innerHTML=best&&best.score>0
-    ?`<div style="text-align:center;padding:20px 0"><div style="font-size:13px;color:var(--text2);margin-bottom:8px">重み付きスコア最高日</div><div style="font-size:32px;font-weight:900;color:var(--ok)">${fmt(best.date)}</div><div style="font-size:14px;color:var(--text2);margin-top:8px">スコア ${best.score} ｜ ○${best.ok}人 △${best.maybe}人 ×${best.no}人</div></div>`
-    :`<div style="text-align:center;color:var(--text2);padding:30px">${Object.keys(ans).length===0?'まだ回答がありません':'全員が参加できる日がありません'}</div>`;
+    ?'<div style="text-align:center;padding:20px 0"><div style="font-family:var(--font-mono);font-size:9px;letter-spacing:3px;color:var(--text3);margin-bottom:10px">OPTIMAL DATE</div><div style="font-family:var(--font-serif);font-size:32px;color:var(--gold)">'+fmt(best.date)+'</div>'+bestScoreLine+'</div>'
+    :'<div style="text-align:center;color:var(--text3);padding:30px;font-family:var(--font-mono);font-size:11px;letter-spacing:2px">'+(totalRespondents===0?'NO RESPONSES YET':'NO OPTIMAL DATE FOUND')+'</div>';
+
+  // コメント
+  const withComments=Object.values(ans).filter(a=>a.comment&&a.comment.trim());
+  $('result-comments-content').innerHTML=withComments.length===0
+    ?'<div style="text-align:center;color:var(--text3);padding:20px;font-family:var(--font-mono);font-size:11px;letter-spacing:2px">NO COMMENTS YET</div>'
+    :withComments.map(function(a){return'<div class="comment-row"><div class="comment-name">'+a.name+'</div><div class="comment-text">'+a.comment+'</div></div>'}).join('');
+
+  // ロール別：主催者専用タブ・確定UIの表示制御
+  const adminTab=$('tab-admin-inline');
+  if(adminTab)adminTab.style.display=isHost?'':'none';
+  const decisionCard=$('result-decision-card');
+  if(decisionCard)decisionCard.style.display=isHost?'block':'none';
+
+  // 主催者インライン管理タブの内容を更新
+  if(isHost){
+    renderInlineAdmin(data);
+  }
+
+  // テキストコピー用にデータをstateに保存
+  state.resultSummary={data,scored,best,totalRespondents};
+
+
+
+  // 日程確定UI
+  const decisionEl=$('result-decision-content');
+  if(decisionEl){
+    if(data.decidedDate){
+      decisionEl.innerHTML=`
+        <div class="decision-confirmed">
+          <span>✅ ${fmt(data.decidedDate)} に確定済み</span>
+          <button id="btn-unconfirm-result" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;color:var(--text2);font-family:var(--font-mono)">取り消す</button>
+        </div>`;
+      $('btn-unconfirm-result').addEventListener('click',()=>{
+        getEvent(state.eventId).then(function(d){if(!d)return;d.decidedDate='';saveEvent(d).then(function(){state.eventData=d;renderResult(d);toast('確定を取り消しました')})});
+      });
+    } else {
+      decisionEl.innerHTML=scored.length===0
+        ?'<div style="color:var(--text3);font-size:12px;font-family:var(--font-mono)">候補日がありません</div>'
+        :scored.map(s=>`
+          <button class="decision-date-btn" data-date="${s.date}">
+            <span>${fmt(s.date)}</span>
+            <span style="font-family:var(--font-mono);font-size:10px;color:var(--text3)">○${s.ok} △${s.maybe} ×${s.no}</span>
+          </button>`).join('');
+      decisionEl.querySelectorAll('.decision-date-btn').forEach(function(btn){
+        btn.addEventListener('click',function(){
+          getEvent(state.eventId).then(function(d){if(!d)return;d.decidedDate=btn.dataset.date;saveEvent(d).then(function(){state.eventData=d;renderResult(d);toast(fmt(btn.dataset.date)+' に確定しました！')})});
+        });
+      });
+    }
+  }
+
 }
 
-async function loginAdmin(){
-  const id=$('admin-id-input').value.trim().toUpperCase();
-  const pass=$('admin-pass-input').value.trim();
-  if(!id||!pass){toast('IDとパスワードを入力してください');return}
-  try{
-    const snap=await get(ref(_db,`events/${id}`));
-    if(!snap.exists()){toast('イベントが見つかりません');return}
-    const data=snap.val();
-    if(data.adminPass!==pass){toast('パスワードが違います');return}
-    state.eventId=id;state.eventData=data;state.adminToken=pass;
-    renderAdmin(data);go('admin');
-  }catch(e){toast('読み込み失敗');console.error(e)}
+// ===== イベント一覧 =====
+window.renderEventList=function renderEventList(){
+  const db=loadDB();
+  const events=Object.values(db).sort((a,b)=>b.createdAt-a.createdAt);
+  const el=$('event-list-content');
+  if(!events.length){el.innerHTML='<div style="text-align:center;color:var(--text2);padding:20px">作成済みイベントはありません</div>';return}
+  el.innerHTML=events.map(e=>`
+    <div class="event-list-item" data-id="${e.id}">
+      <div class="event-list-info">
+        <div class="event-list-name">${e.name}</div>
+        <div class="event-list-meta">候補日 ${e.dates.length}件 ／ 回答 ${Object.keys(e.answers||{}).length}人</div>
+      </div>
+      <div class="event-list-id">${e.id}</div>
+      <div class="event-list-arrow">›</div>
+    </div>`).join('');
+  el.querySelectorAll('.event-list-item').forEach(item=>item.addEventListener('click',()=>{
+    getEvent(item.dataset.id).then(function(data){
+      if(!data)return;
+      state.eventId=data.id;state.eventData=data;
+      $('result-id-input').value=data.id;
+      renderResult(data);go('result');
+    });
+  }));
 }
+
+// ===== 管理画面 =====
+async function openAdmin(){
+  const id=$('admin-id-input').value.trim().toUpperCase();
+  if(id.length!==6){toast('IDは6文字です');return}
+  const data=await getEvent(id);
+  if(!data){toast('イベントが見つかりません');return}
+  state.eventId=id;state.eventData=data;
+  renderAdmin(data);go('admin');
+}
+
 function renderAdmin(data){
-  $('admin-event-info').innerHTML=`<div style="font-size:18px;font-weight:800">${data.name}</div><div style="font-size:12px;color:var(--text2);margin-top:4px">ID: ${data.id}</div>`;
-  const ans=data.answers||{},prio=data.priorities||{},parts=Object.values(ans);
-  if(!parts.length){$('admin-participants').innerHTML='<div style="text-align:center;color:var(--text2);padding:20px">まだ回答がありません</div>';return}
-  $('admin-participants').innerHTML=parts.map(p=>{
+  $('admin-event-info').innerHTML=`
+    <div style="font-family:var(--font-serif);font-size:20px">${data.name}</div>
+    <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-top:4px;letter-spacing:2px">ID: ${data.id}</div>`;
+
+  const ans=data.answers||{};
+
+  // 回答状況
+  const members=data.members||[];
+  const answeredNames=Object.values(ans).map(a=>a.name);
+  if(members.length>0){
+    const pending=members.filter(m=>!answeredNames.includes(m));
+    const answered=members.filter(m=>answeredNames.includes(m));
+    const extra=answeredNames.filter(n=>!members.includes(n));
+    $('admin-pending').innerHTML=`
+      <div class="status-bar">
+        <span>登録メンバー <strong>${members.length}人</strong></span>
+        <span>回答済み <strong style="color:var(--ok)">${answered.length}人</strong> / 未回答 <strong style="color:var(--no)">${pending.length}人</strong></span>
+      </div>
+      <div class="pending-wrap">
+        ${members.map(function(m){return'<span class="pending-chip '+( answeredNames.includes(m)?'answered':'not-answered')+ '">'+(answeredNames.includes(m)?'✓ ':'⏳ ')+m+'</span>'}).join('')}
+        ${extra.map(function(n){return'<span class="pending-chip answered" style="opacity:.6">✓ '+n+'（追加）</span>'}).join('')}
+      </div>`;
+  } else {
+    $('admin-pending').innerHTML=answeredNames.length===0
+      ?'<div style="text-align:center;color:var(--text2);padding:10px">まだ回答がありません</div>'
+      :'<div class="pending-wrap">'+answeredNames.map(function(n){return'<span class="pending-chip answered">✓ '+n+'</span>'}).join('')+'</div>';
+  }
+
+  // 優先度設定
+  const parts=Object.values(ans);
+  const prio=data.priorities||{};
+  if(!parts.length){
+    $('admin-participants').innerHTML='<div style="text-align:center;color:var(--text2);padding:10px">まだ回答がありません</div>';
+    return;
+  }
+  $('admin-participants').innerHTML=parts.map(function(p){
     const k=p.name.replace(/[.#$[\]]/g,'_'),pr=prio[k]||'normal';
-    return`<div class="participant-row"><div class="participant-name">${p.name}</div>
-      <select class="priority-select" id="prio-${k}">
-        <option value="required" ${pr==='required'?'selected':''}>🔴 必須</option>
-        <option value="important" ${pr==='important'?'selected':''}>🟡 重要</option>
-        <option value="normal" ${pr==='normal'?'selected':''}>⚪ 一般</option>
-      </select></div>`;
+    return'<div class="participant-row">'
+      +'<div class="participant-name">'+p.name+'</div>'
+      +'<select class="priority-select" id="prio-'+k+'">'
+      +'<option value="required" '+(pr==='required'?'selected':'')+'>🔴 必須</option>'
+      +'<option value="important" '+(pr==='important'?'selected':'')+'>🟡 重要</option>'
+      +'<option value="normal" '+(pr==='normal'?'selected':'')+'>⚪ 一般</option>'
+      +'</select></div>';
   }).join('');
 }
+
 async function saveAdmin(){
-  const ans=state.eventData.answers||{},prio={};
-  Object.values(ans).forEach(p=>{const k=p.name.replace(/[.#$[\]]/g,'_'),s=$(`prio-${k}`);if(s)prio[k]=s.value});
-  try{await update(ref(_db,`events/${state.eventId}`),{priorities:prio});toast('重要度を保存しました')}
-  catch(e){toast('保存失敗');console.error(e)}
+  const data=await getEvent(state.eventId);
+  if(!data)return;
+  const ans=data.answers||{},prio={};
+  Object.values(ans).forEach(p=>{
+    const k=p.name.replace(/[.#$[\]]/g,'_');
+    const sel=$(`prio-${k}`);
+    if(sel)prio[k]=sel.value;
+  });
+  data.priorities=prio;
+  await saveEvent(data);
+  state.eventData=data;
+  toast('優先度を保存しました');
 }
 
-// ===== イベント登録 =====
-document.querySelectorAll('[data-screen]').forEach(el=>el.addEventListener('click',()=>go(el.dataset.screen)));
+// ===== デモデータ =====
+function loadDemoData(){
+  const today=new Date();
+  const d=(offset)=>{
+    const dt=new Date(today);
+    dt.setDate(dt.getDate()+offset);
+    return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+  };
+
+  // イベント1：回答済み（チーム飲み会）
+  const id1='DEMO01';
+  const dates1=[d(5),d(7),d(10),d(12),d(14)];
+  const event1={
+    id:id1,name:'チーム納会 🍻',memo:'渋谷近辺で19時スタート予定',
+    dates:dates1,members:['田中','佐藤','鈴木','山田','高橋'],
+    createdAt:Date.now()-86400000,adminPass:'123456',
+    priorities:{田中:'required',佐藤:'important',鈴木:'normal',山田:'normal',高橋:'normal'},
+    answers:{
+      田中:{name:'田中',answers:{[d(5)]:'ok',[d(7)]:'ok',[d(10)]:'no',[d(12)]:'ok',[d(14)]:'ok'},comment:'10日は出張で無理です。他はOKです！',answeredAt:Date.now()-3600000*5},
+      佐藤:{name:'佐藤',answers:{[d(5)]:'ok',[d(7)]:'maybe',[d(10)]:'ok',[d(12)]:'ok',[d(14)]:'no'},comment:'7日は調整できるかも。14日は家族の予定があります。',answeredAt:Date.now()-3600000*4},
+      鈴木:{name:'鈴木',answers:{[d(5)]:'maybe',[d(7)]:'ok',[d(10)]:'ok',[d(12)]:'ok',[d(14)]:'ok'},comment:'',answeredAt:Date.now()-3600000*3},
+      山田:{name:'山田',answers:{[d(5)]:'ok',[d(7)]:'ok',[d(10)]:'ok',[d(12)]:'maybe',[d(14)]:'ok'},comment:'どこでも行けます！楽しみにしてます',answeredAt:Date.now()-3600000*2},
+      高橋:{name:'高橋',answers:{[d(5)]:'no',[d(7)]:'ok',[d(10)]:'ok',[d(12)]:'ok',[d(14)]:'maybe'},comment:'',answeredAt:Date.now()-3600000},
+    }
+  };
+
+  // イベント2：未回答混在（プロジェクトキックオフ）
+  const id2='DEMO02';
+  const dates2=[d(3),d(6),d(8),d(11)];
+  const event2={
+    id:id2,name:'プロジェクトキックオフ 🚀',memo:'オンライン開催、1時間程度',
+    dates:dates2,members:['中村','小林','加藤','伊藤','渡辺'],
+    createdAt:Date.now()-43200000,adminPass:'654321',
+    priorities:{中村:'required',小林:'important'},
+    answers:{
+      中村:{name:'中村',answers:{[d(3)]:'ok',[d(6)]:'ok',[d(8)]:'maybe',[d(11)]:'ok'},comment:'8日は別MTGと被るかもしれないので要確認です',answeredAt:Date.now()-1800000*3},
+      小林:{name:'小林',answers:{[d(3)]:'no',[d(6)]:'ok',[d(8)]:'ok',[d(11)]:'ok'},comment:'3日は終日NG。それ以外は問題ありません！',answeredAt:Date.now()-1800000*2},
+      加藤:{name:'加藤',answers:{[d(3)]:'ok',[d(6)]:'maybe',[d(8)]:'ok',[d(11)]:'no'},comment:'',answeredAt:Date.now()-1800000},
+      // 伊藤・渡辺は未回答
+    }
+  };
+
+  const db=loadDB();
+  db[id1]=event1;
+  db[id2]=event2;
+  saveDB(db);
+
+  toast('デモデータを読み込みました！');
+
+  // イベント一覧へ遷移して確認
+  renderEventList();
+  go('event-list');
+}
+
+// ===== インライン管理（集計画面内の主催者専用タブ） =====
+function renderInlineAdmin(data){
+  const ans=data.answers||{};
+  const members=data.members||[];
+  const answeredNames=Object.values(ans).map(a=>a.name);
+  const prio=data.priorities||{};
+
+  // 回答状況
+  const pendingEl=$('inline-pending');
+  if(pendingEl){
+    if(members.length>0){
+      const pending=members.filter(m=>!answeredNames.includes(m));
+      const answered=members.filter(m=>answeredNames.includes(m));
+      pendingEl.innerHTML=`
+        <div class="status-bar"><span>MEMBER <strong>${members.length}</strong></span><span>ANSWERED <strong style="color:var(--ok)">${answered.length}</strong> / PENDING <strong style="color:var(--no)">${pending.length}</strong></span></div>
+        <div class="pending-wrap">
+          ${members.map(function(m){return'<span class="pending-chip '+( answeredNames.includes(m)?'answered':'not-answered')+ '">'+(answeredNames.includes(m)?'✓ ':'⏳ ')+m+'</span>'}).join('')}
+        </div>`;
+    } else {
+      pendingEl.innerHTML=answeredNames.length===0
+        ?'<div style="color:var(--text3);font-family:var(--font-mono);font-size:11px;letter-spacing:2px;padding:10px 0">NO RESPONSES YET</div>'
+        :'<div class="pending-wrap">'+answeredNames.map(function(n){return'<span class="pending-chip answered">✓ '+n+'</span>'}).join('')+'</div>';
+    }
+  }
+
+  // 優先度設定
+  const partsEl=$('inline-participants');
+  if(partsEl){
+    const parts=Object.values(ans);
+    if(!parts.length){
+      partsEl.innerHTML='<div style="color:var(--text3);font-family:var(--font-mono);font-size:11px;letter-spacing:2px;padding:10px 0">NO RESPONSES YET</div>';
+    } else {
+      partsEl.innerHTML=parts.map(function(p){
+        const k=p.name.replace(/[.#$[\]]/g,'_'),pr=prio[k]||'normal';
+        return'<div class="participant-row">'
+          +'<div class="participant-name">'+p.name+'</div>'
+          +'<select class="priority-select" id="inline-prio-'+k+'">'
+          +'<option value="required" '+(pr==='required'?'selected':'')+'>🔴 必須</option>'
+          +'<option value="important" '+(pr==='important'?'selected':'')+'>🟡 重要</option>'
+          +'<option value="normal" '+(pr==='normal'?'selected':'')+'>⚪ 一般</option>'
+          +'</select></div>';
+      }).join('');
+    }
+  }
+}
+
+async function saveInlineAdmin(){
+  const data=await getEvent(state.eventId);
+  if(!data)return;
+  const ans=data.answers||{},prio={};
+  Object.values(ans).forEach(p=>{
+    const k=p.name.replace(/[.#$[\]]/g,'_');
+    const sel=$(`inline-prio-${k}`);
+    if(sel)prio[k]=sel.value;
+  });
+  data.priorities=prio;
+  await saveEvent(data);state.eventData=data;
+  toast('優先度を保存しました');
+  renderResult(data);
+}
+
+// ===== スコア内訳ポップアップ =====
+function showScorePopup(date, data){
+  var ans=data.answers||{}, prio=data.priorities||{};
+  var prioLabel={required:'必須',important:'重要',normal:'一般'};
+  var prioClass={required:'prio-required',important:'prio-important',normal:'prio-normal'};
+  var rows='', formulaParts=[], total=0, hasNG=false;
+  Object.values(ans).forEach(function(a){
+    var k=a.name.replace(/[.#$[\]]/g,'_');
+    var p=prio[k]||'normal', w=p==='important'?3:1;
+    var c=a.answers[date]||'?';
+    var pts=c==='ok'?2*w:c==='maybe'?w:0;
+    if(p==='required'&&c==='no') hasNG=true;
+    var calcStr='';
+    if(c==='ok') calcStr=p==='important'?'+6 (○×重要)':p==='required'?'+2 (○×必須)':'+2';
+    else if(c==='maybe') calcStr=p==='important'?'+3 (△×重要)':p==='required'?'+1 (△×必須)':'+1';
+    else calcStr='0';
+    if(pts>0) formulaParts.push(a.name+'('+calcStr+')');
+    total+=pts;
+    var ansColor=c==='ok'?'var(--ok)':c==='maybe'?'var(--maybe)':'var(--no)';
+    var ansChar=c==='ok'?'○':c==='maybe'?'△':'×';
+    rows+='<div class="score-popup-row">'
+      +'<div class="score-popup-name">'+a.name+'</div>'
+      +'<span class="score-popup-prio '+prioClass[p]+'">'+prioLabel[p]+'</span>'
+      +'<div class="score-popup-ans"><span style="color:'+ansColor+'">'+ansChar+'</span></div>'
+      +'<div class="score-popup-calc" style="color:'+(pts>0?'var(--gold)':'var(--text3)')+'">'+calcStr+'</div>'
+      +'</div>';
+  });
+  var formula=formulaParts.length>0
+    ?formulaParts.join(' + ')+' = <span class="score-popup-total">'+total+'点</span>'
+    :'<span style="color:var(--text3)">得点なし</span>';
+  if(hasNG) formula='<span style="color:var(--no);font-weight:700">🔴 必須メンバーが×のため除外対象</span><br>'+formula;
+  $('score-popup-date').textContent=fmt(date);
+  $('score-popup-rows').innerHTML=rows;
+  $('score-popup-formula').innerHTML='計算式：'+formula;
+  $('score-popup').style.display='flex';
+}
+function hideScorePopup(){
+  $('score-popup').style.display='none';
+}
+
+const WT_STEPS=[
+  {screen:'host',   target:'btn-role-host',   step:'STEP 01 / 04', title:'まず役割を選択',  desc:'主催者はイベント作成・優先度設定・日程確定ができます。参加者はIDで参加して回答するだけ。'},
+  {screen:'create', target:'btn-create-event', step:'STEP 02 / 04', title:'イベントを作成',  desc:'イベント名・候補日・参加者を設定して6文字のIDを発行します。'},
+  {screen:'join',   target:'join-id',          step:'STEP 03 / 04', title:'IDで参加・回答',  desc:'発行されたIDを入力。参加者は名前を選んで○△×で回答するだけです。'},
+  {screen:'result-entry', target:'result-id-input', step:'STEP 04 / 04', title:'集計を見る', desc:'IDを入力すると集計表・グラフ・最適日が表示されます。主催者は⚙️管理タブで優先度設定・日程確定も可能。'},
+];
+let wtIdx=0;
+function startWalkthrough(){
+  wtIdx=0;showWtStep();
+  $('walkthrough').style.display='block';
+  requestAnimationFrame(()=>$('walkthrough').classList.add('active'));
+}
+function showWtStep(){
+  const s=WT_STEPS[wtIdx];
+  go(s.screen);
+  $('wt-step').textContent=s.step;
+  $('wt-title').textContent=s.title;
+  $('wt-desc').textContent=s.desc;
+  $('wt-progress').textContent=`${wtIdx+1} / ${WT_STEPS.length}`;
+  $('wt-next').textContent=wtIdx===WT_STEPS.length-1?'完了 ✓':'次へ →';
+  // ハイライト
+  document.querySelectorAll('.wt-highlight').forEach(el=>el.classList.remove('wt-highlight'));
+  setTimeout(()=>{const t=$(s.target);if(t)t.classList.add('wt-highlight');},200);
+}
+function endWalkthrough(){
+  $('walkthrough').classList.remove('active');
+  $('walkthrough').style.display='none';
+  document.querySelectorAll('.wt-highlight').forEach(el=>el.classList.remove('wt-highlight'));
+  go('home');
+}
+$('wt-next').addEventListener('click',()=>{
+  if(wtIdx<WT_STEPS.length-1){wtIdx++;showWtStep();}else endWalkthrough();
+});
+$('wt-skip').addEventListener('click',endWalkthrough);
+
+// ===== テキストコピー =====
+function copyResultText(){
+  const s=state.resultSummary;
+  if(!s){toast('先に集計を表示してください');return}
+  const data=s.data,scored=s.scored,best=s.best,totalRespondents=s.totalRespondents;
+  const isHost=state.role==='host';
+  var text='【'+data.name+'】日程調整結果\n';
+  if(data.memo)text+=data.memo+'\n';
+  text+='回答者：'+totalRespondents+'人\n\n';
+  var maxSc=Math.max.apply(null,scored.filter(function(x){return!x.reqFail}).map(function(x){return x.score}).concat([0]));
+  scored.forEach(function(sc){
+    text+=fmt(sc.date)+'　○'+sc.ok+' △'+sc.maybe+' ×'+sc.no;
+    // 参加者ビューではスコアやNG情報を含めない
+    if(!sc.reqFail&&sc.score===maxSc&&sc.score>0)text+='  ⭐おすすめ';
+    if(isHost&&sc.reqFail)text+='  [NG]';
+    text+='\n';
+  });
+  if(best&&best.score>0)text+='\nおすすめ：'+fmt(best.date)+'（○'+best.ok+'人）';
+  if(data.decidedDate)text+='\n✅ 確定日：'+fmt(data.decidedDate);
+  navigator.clipboard.writeText(text).then(function(){toast('結果をコピーしました！')});
+}
+
+// 役割選択
+window._state=state; // stateをwindow経由で通常scriptからも参照可能に
+
+// 主催者メニューの集計ボタン
+$('btn-host-result').addEventListener('click',()=>{
+  $('result-id-input').value='';
+  go('result-entry');
+});
+
+// 参加者メニューの集計ボタン
+$('btn-guest-result').addEventListener('click',()=>{
+  $('result-id-input').value='';
+  go('result-entry');
+});
+
+// インライン管理保存
+$('btn-save-inline-admin').addEventListener('click',saveInlineAdmin);
+
+
 document.querySelectorAll('[data-tab]').forEach(el=>el.addEventListener('click',()=>{
   const name=el.dataset.tab;
-  ['table','chart','best'].forEach(t=>{
-    $(`result-tab-${t}`).style.display=t===name?'block':'none';
-    $(`tab-${t}`).classList.toggle('active',t===name);
+  ['table','chart','best','comments','admin-inline'].forEach(t=>{
+    const tabContent=$(`result-tab-${t}`);
+    if(tabContent)tabContent.style.display=t===name?'block':'none';
+    const tabBtn=$(`tab-${t}`);
+    if(tabBtn)tabBtn.classList.toggle('active',t===name);
   });
+  if(name==='chart'){
+    if(state.chart)state.chart.resize();
+    if(state.chartRatio)state.chartRatio.resize();
+  }
 }));
 $('cal-prev').addEventListener('click',()=>{if(state.calMonth===0){state.calMonth=11;state.calYear--}else state.calMonth--;renderCal()});
 $('cal-next').addEventListener('click',()=>{if(state.calMonth===11){state.calMonth=0;state.calYear++}else state.calMonth++;renderCal()});
+$('btn-add-member').addEventListener('click',addMember);
+$('member-input').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addMember()}});
 $('btn-create-event').addEventListener('click',createEvent);
 $('btn-copy-id').addEventListener('click',()=>navigator.clipboard.writeText(state.eventId).then(()=>toast('IDをコピーしました')));
-$('btn-go-admin').addEventListener('click',()=>{renderAdmin(state.eventData);go('admin')});
+$('btn-go-result').addEventListener('click',function(){
+  getEvent(state.eventId).then(function(data){
+    if(data){$('result-id-input').value=state.eventId;renderResult(data);go('result')}
+  });
+});
 $('btn-join-event').addEventListener('click',joinEvent);
-$('join-id').addEventListener('input',e=>e.target.value=e.target.value.toUpperCase());
+$('join-id').addEventListener('input',e=>{
+  e.target.value=e.target.value.toUpperCase();
+  const id=e.target.value.trim();
+  const ns=$('join-name-section');
+  if(id.length===6){
+    getEvent(id).then(function(data){
+    if(data){
+      const members=data.members||[];
+      if(members.length>0){
+        ns.innerHTML=`
+          <div class="form-group">
+            <label class="form-label">あなたの名前を選んでください</label>
+            <div class="name-chips" id="name-chips">
+              ${members.map(m=>{
+                const answered=!!(data.answers||{})[m.replace(/[.#$[\]]/g,'_')]||!!(data.answers||{})[m];
+                return'<button class="name-chip '+(answered?'already-answered':'')+'" data-name="'+m+'">'+m+(answered?' ✓':'')+'</button>';
+              }).join('')}
+            </div>
+            <div style="margin-top:10px;font-size:12px;color:var(--text3);font-family:var(--font-mono);letter-spacing:1px">一覧にない場合は直接入力</div>
+            <input class="form-input" id="join-name" placeholder="または直接入力" style="margin-top:8px">
+          </div>`;
+        ns.querySelectorAll('.name-chip').forEach(chip=>chip.addEventListener('click',()=>{
+          ns.querySelectorAll('.name-chip').forEach(c=>c.classList.remove('selected'));
+          chip.classList.add('selected');
+          $('join-name').value=chip.dataset.name;
+        }));
+      } else {
+        ns.innerHTML=`<div class="form-group"><label class="form-label">あなたの名前</label><input class="form-input" id="join-name" placeholder="例：山田太郎"></div>`;
+      }
+    } else {
+      ns.innerHTML='<div class="form-group"><label class="form-label">あなたの名前</label><input class="form-input" id="join-name" placeholder="例：山田太郎"></div>';
+    }
+    });
+  } else {
+    ns.innerHTML=`<div class="form-group"><label class="form-label">あなたの名前</label><input class="form-input" id="join-name" placeholder="例：山田太郎"></div>`;
+  }
+});
 $('btn-submit-answer').addEventListener('click',submitAnswer);
 $('btn-load-result').addEventListener('click',loadResult);
 $('result-id-input').addEventListener('input',e=>e.target.value=e.target.value.toUpperCase());
-$('btn-login-admin').addEventListener('click',loginAdmin);
 $('admin-id-input').addEventListener('input',e=>e.target.value=e.target.value.toUpperCase());
+$('btn-open-admin').addEventListener('click',openAdmin);
 $('btn-save-admin').addEventListener('click',saveAdmin);
+$('btn-reset-event').addEventListener('click',function(){
+  if(!state.eventId)return;
+  getEvent(state.eventId).then(function(data){
+    if(!data)return;
+    data.answers={};
+    saveEvent(data).then(function(){state.eventData=data;toast('回答をリセットしました');renderResult(data)});
+  });
+});
 
+$('btn-load-demo').addEventListener('click',loadDemoData);
+$('btn-copy-result').addEventListener('click',copyResultText);
+$('score-popup-backdrop').addEventListener('click',hideScorePopup);
+
+// URLにIDがあれば直接参加画面へ
 const urlId=new URLSearchParams(location.search).get('id');
-if(urlId){$('join-id').value=urlId.toUpperCase();$('result-id-input').value=urlId.toUpperCase()}
+if(urlId){
+  $('join-id').value=urlId.toUpperCase();
+  state.role='guest';
+  go('guest');
+  setTimeout(function(){joinEvent();},100);
+}
+
 renderCal();
+
+
 </script>
 </body>
 </html>
