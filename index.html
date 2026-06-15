@@ -256,7 +256,6 @@
     /* ===== HOME SCREEN ===== */
     #screen-home {
       position: relative;
-      overflow: hidden;
     }
 
     /* ダークモード背景グロー */
@@ -304,7 +303,8 @@
       align-items: center;
       justify-content: center;
       min-height: 100dvh;
-      padding: 48px 24px 24px;
+      padding: 48px 24px 40px;
+      gap: 36px;
       text-align: center;
     }
 
@@ -2176,12 +2176,6 @@
       <div class="home-hero">
         <div class="home-logo">にちかん</div>
         <div class="home-tagline">日程調整を、かしこく。</div>
-        <!-- スマホ用グロードット -->
-        <div class="home-glow-dots">
-          <div class="home-glow-dot"></div>
-          <div class="home-glow-dot active"></div>
-          <div class="home-glow-dot"></div>
-        </div>
         <!-- PC用機能説明 -->
         <ul class="home-features-list">
           <li>候補日を選んでIDを発行・チームに共有</li>
