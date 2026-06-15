@@ -34,6 +34,7 @@
       --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.05);
       --radius: 14px;
       --radius-sm: 8px;
+      --font-mono: 'JetBrains Mono', monospace;
     }
 
     @media (prefers-color-scheme: dark) {
@@ -253,39 +254,189 @@
     }
 
     /* ===== HOME SCREEN ===== */
+    #screen-home {
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ダークモード背景グロー */
+    .home-bg-glow {
+      display: none;
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 55%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .home-bg-glow {
+        display: block;
+        background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(201,168,76,0.18) 0%, transparent 70%);
+      }
+    }
+
+    /* PCグリッドオーバーレイ */
+    .home-bg-grid {
+      display: none;
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @media (min-width: 640px) {
+      .home-bg-grid {
+        display: block;
+        background-image:
+          linear-gradient(rgba(184,146,46,0.06) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(184,146,46,0.06) 1px, transparent 1px);
+        background-size: 48px 48px;
+      }
+    }
+
+    /* メインレイアウト */
     .home-inner {
+      position: relative;
+      z-index: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       min-height: 100dvh;
-      padding: 40px 24px;
+      padding: 48px 24px 24px;
       text-align: center;
     }
 
+    @media (min-width: 640px) {
+      .home-inner {
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 64px;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 48px;
+        text-align: left;
+      }
+    }
+
+    /* ヒーロー左カラム */
+    .home-hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    @media (min-width: 640px) {
+      .home-hero {
+        flex: 1.2;
+        align-items: flex-start;
+      }
+    }
+
+    /* ロゴ */
     .home-logo {
       font-family: 'DM Serif Display', serif;
-      font-size: 44px;
+      font-size: 56px;
       color: var(--gold);
       letter-spacing: -0.02em;
-      margin-bottom: 8px;
+      line-height: 1;
+      margin-bottom: 12px;
     }
 
+    @media (min-width: 640px) {
+      .home-logo { font-size: 72px; margin-bottom: 16px; }
+    }
+
+    /* タグライン */
     .home-tagline {
-      font-size: 13px;
-      color: var(--text3);
-      letter-spacing: 0.06em;
-      margin-bottom: 60px;
+      font-size: 14px;
+      color: var(--gold2);
+      letter-spacing: 0.08em;
+      margin-bottom: 24px;
+      font-weight: 500;
     }
 
-    .role-grid {
+    @media (prefers-color-scheme: dark) {
+      .home-tagline { color: var(--gold); }
+    }
+
+    /* ロゴ下グロードット（スマホのみ） */
+    .home-glow-dots {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 36px;
+    }
+
+    .home-glow-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--gold);
+      opacity: 0.35;
+    }
+
+    .home-glow-dot.active {
+      opacity: 1;
+      box-shadow: 0 0 8px var(--gold), 0 0 2px var(--gold);
+    }
+
+    @media (min-width: 640px) {
+      .home-glow-dots { display: none; }
+    }
+
+    /* PC用機能説明リスト */
+    .home-features-list {
+      display: none;
+    }
+
+    @media (min-width: 640px) {
+      .home-features-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        list-style: none;
+        margin-bottom: 32px;
+      }
+
+      .home-features-list li {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+        color: var(--text2);
+        line-height: 1.5;
+      }
+
+      .home-features-list li::before {
+        content: '';
+        display: inline-block;
+        width: 18px;
+        height: 1px;
+        background: var(--gold);
+        flex-shrink: 0;
+        opacity: 0.6;
+      }
+    }
+
+    /* カード右カラム */
+    .home-cards {
       display: flex;
       flex-direction: column;
       gap: 14px;
       width: 100%;
-      max-width: 320px;
+      max-width: 340px;
     }
 
+    @media (min-width: 640px) {
+      .home-cards {
+        flex: 1;
+        max-width: 320px;
+      }
+    }
+
+    /* 役割カード共通 */
     .role-btn {
       display: flex;
       align-items: center;
@@ -293,15 +444,67 @@
       background: var(--bg2);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 20px 24px;
+      padding: 20px 22px;
       cursor: pointer;
       box-shadow: var(--shadow-card);
-      transition: transform 0.12s;
+      transition: transform 0.14s, box-shadow 0.14s;
       text-align: left;
       width: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .role-btn::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
     }
 
     .role-btn:active { transform: scale(0.97); }
+
+    /* 主催者カード：ゴールド */
+    .role-btn-host {
+      border-top-color: rgba(184,146,46,0.35);
+    }
+
+    .role-btn-host::before {
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    .role-btn-host:hover {
+      box-shadow: var(--shadow-card), 0 0 20px rgba(184,146,46,0.12);
+    }
+
+    /* 参加者カード：ブルー */
+    .role-btn-guest {
+      border-top-color: rgba(79,163,232,0.35);
+    }
+
+    .role-btn-guest::before {
+      background: linear-gradient(90deg, transparent, #4fa3e8, transparent);
+    }
+
+    .role-btn-guest:hover {
+      box-shadow: var(--shadow-card), 0 0 20px rgba(79,163,232,0.12);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .role-btn-host {
+        border-top-color: rgba(201,168,76,0.4);
+        background-image: linear-gradient(to bottom, rgba(201,168,76,0.09) 0px, transparent 40px);
+      }
+      .role-btn-host:hover {
+        box-shadow: var(--shadow-card), 0 0 28px rgba(201,168,76,0.18);
+      }
+      .role-btn-guest {
+        border-top-color: rgba(79,163,232,0.35);
+        background-image: linear-gradient(to bottom, rgba(79,163,232,0.08) 0px, transparent 40px);
+      }
+      .role-btn-guest:hover {
+        box-shadow: var(--shadow-card), 0 0 28px rgba(79,163,232,0.16);
+      }
+    }
 
     .role-icon { font-size: 28px; flex-shrink: 0; }
 
@@ -312,69 +515,57 @@
       margin-bottom: 3px;
     }
 
-    .role-desc { font-size: 12px; color: var(--text2); }
+    .role-desc { font-size: 12px; color: var(--text2); margin-bottom: 10px; }
+
+    .role-features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .role-feature-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--gold);
+      background: rgba(184,146,46,0.08);
+      border: 1px solid rgba(184,146,46,0.2);
+      border-radius: 4px;
+      padding: 2px 6px;
+      letter-spacing: 0.02em;
+    }
+
+    .role-btn-guest .role-feature-tag {
+      color: #4fa3e8;
+      background: rgba(79,163,232,0.08);
+      border-color: rgba(79,163,232,0.2);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .role-feature-tag {
+        background: rgba(201,168,76,0.1);
+        border-color: rgba(201,168,76,0.22);
+      }
+      .role-btn-guest .role-feature-tag {
+        background: rgba(79,163,232,0.1);
+        border-color: rgba(79,163,232,0.22);
+      }
+      .menu-card,
+      .cal-wrap,
+      .event-list-card {
+        background-image: linear-gradient(to bottom, rgba(201,168,76,0.1) 0px, rgba(201,168,76,0) 3px);
+        border-top-color: rgba(201,168,76,0.28);
+      }
+    }
 
     /* ===== MENU CARDS ===== */
     .menu-list {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 0;
       padding: 24px 20px;
       max-width: 480px;
       margin: 0 auto;
-    }
-
-    .menu-section-title {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--text3);
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      padding: 0 4px;
-      margin-top: 4px;
-    }
-
-    .menu-card {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px 20px;
-      cursor: pointer;
-      box-shadow: var(--shadow-card);
-      transition: transform 0.12s;
-      text-align: left;
-      width: 100%;
-    }
-
-    .menu-card:active { transform: scale(0.97); }
-
-    .menu-card-icon {
-      font-size: 22px;
-      flex-shrink: 0;
-      width: 32px;
-      text-align: center;
-    }
-
-    .menu-card-body { flex: 1; min-width: 0; }
-
-    .menu-card-label {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 2px;
-    }
-
-    .menu-card-desc { font-size: 12px; color: var(--text2); }
-
-    .menu-card-arrow {
-      color: var(--text3);
-      font-size: 20px;
-      flex-shrink: 0;
-      margin-left: auto;
     }
 
     /* ===== FORM ===== */
@@ -431,6 +622,17 @@
     }
 
     .form-textarea:focus { border-color: var(--gold); }
+
+    #answer-comment:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(184,146,46,0.12);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      #answer-comment:focus {
+        box-shadow: 0 0 0 3px rgba(201,168,76,0.16);
+      }
+    }
 
     .form-hint {
       font-size: 11px;
@@ -732,22 +934,32 @@
       box-shadow: var(--shadow-card);
     }
 
-    /* ===== JOIN SCREEN ===== */
-    #join-id {
+    /* ===== ID入力フィールド共通 ===== */
+    #join-id, #result-id, #admin-id {
       text-transform: uppercase;
-      letter-spacing: 0.18em;
+      letter-spacing: 8px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 22px;
+      font-size: 28px;
       text-align: center;
+      padding-left: 8px;
     }
+
+    /* ===== JOIN SCREEN ===== */
 
     .join-event-card {
       background: var(--bg2);
-      border: 1px solid var(--border-gold);
+      border: 1.5px solid var(--gold2);
       border-radius: var(--radius);
       padding: 16px;
       margin-bottom: 16px;
-      box-shadow: var(--shadow-card);
+      box-shadow: var(--shadow-card), 0 0 0 1px rgba(184,146,46,0.08);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .join-event-card {
+        border-color: rgba(201,168,76,0.4);
+        box-shadow: var(--shadow-card), 0 0 16px rgba(201,168,76,0.08);
+      }
     }
 
     .join-event-label {
@@ -772,8 +984,8 @@
     }
 
     .member-chip {
-      background: var(--bg3);
-      border: 1.5px solid var(--border);
+      background: rgba(184,146,46,0.06);
+      border: 1.5px solid rgba(184,146,46,0.2);
       border-radius: 999px;
       padding: 7px 14px;
       font-size: 14px;
@@ -784,15 +996,31 @@
     }
 
     .member-chip.answered {
-      background: var(--ok-bg);
-      border-color: rgba(26,158,117,.3);
-      color: var(--ok);
+      background: rgba(184,146,46,0.12);
+      border-color: rgba(184,146,46,0.4);
+      color: var(--gold);
     }
 
     .member-chip.selected {
       background: var(--gold);
       border-color: var(--gold);
       color: #fff;
+      box-shadow: 0 0 10px rgba(184,146,46,0.3);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .member-chip {
+        background: rgba(201,168,76,0.07);
+        border-color: rgba(201,168,76,0.22);
+      }
+      .member-chip.answered {
+        background: rgba(201,168,76,0.13);
+        border-color: rgba(201,168,76,0.4);
+        color: var(--gold);
+      }
+      .member-chip.selected {
+        box-shadow: 0 0 14px rgba(201,168,76,0.35);
+      }
     }
 
     /* ===== ANSWER SCREEN ===== */
@@ -854,38 +1082,61 @@
 
     .answer-date-label {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 13px;
+      font-size: 14px;
+      font-weight: 600;
       color: var(--text);
       flex: 1;
+      letter-spacing: 0.02em;
     }
 
     .choice-group { display: flex; gap: 8px; }
 
     .choice-btn {
-      width: 46px;
-      height: 46px;
+      width: 52px;
+      height: 52px;
       border-radius: 50%;
       border: 2px solid var(--border);
       background: var(--bg3);
-      font-size: 18px;
+      font-size: 20px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.1s;
+      transition: transform 0.1s, box-shadow 0.15s;
       font-family: 'Noto Sans JP', sans-serif;
       flex-shrink: 0;
     }
 
     .choice-btn:active { transform: scale(0.88); }
 
-    .choice-ok  { color: var(--ok); }
+    .choice-ok    { color: var(--ok); }
     .choice-maybe { color: var(--maybe); }
-    .choice-no  { color: var(--no); }
+    .choice-no    { color: var(--no); }
 
-    .active-ok    { background: var(--ok);    border-color: var(--ok);    color: #fff; }
-    .active-maybe { background: var(--maybe); border-color: var(--maybe); color: #fff; }
-    .active-no    { background: var(--no);    border-color: var(--no);    color: #fff; }
+    .active-ok {
+      background: var(--ok);
+      border-color: var(--ok);
+      color: #fff;
+      box-shadow: 0 0 14px rgba(26,158,117,.5), 0 0 4px rgba(26,158,117,.3);
+    }
+    .active-maybe {
+      background: var(--maybe);
+      border-color: var(--maybe);
+      color: #fff;
+      box-shadow: 0 0 14px rgba(196,122,10,.5), 0 0 4px rgba(196,122,10,.3);
+    }
+    .active-no {
+      background: var(--no);
+      border-color: var(--no);
+      color: #fff;
+      box-shadow: 0 0 14px rgba(201,48,68,.5), 0 0 4px rgba(201,48,68,.3);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .active-ok    { box-shadow: 0 0 18px rgba(45,212,160,.55), 0 0 6px rgba(45,212,160,.3); }
+      .active-maybe { box-shadow: 0 0 18px rgba(245,166,35,.55), 0 0 6px rgba(245,166,35,.3); }
+      .active-no    { box-shadow: 0 0 18px rgba(240,92,110,.55), 0 0 6px rgba(240,92,110,.3); }
+    }
 
     /* ===== TAB BAR ===== */
     .tab-bar {
@@ -916,6 +1167,7 @@
     .tab-btn.active {
       color: var(--gold);
       border-bottom-color: var(--gold);
+      font-weight: 700;
     }
 
     .result-tab {
@@ -939,7 +1191,18 @@
       border-bottom: 1px solid var(--border);
     }
     .result-row:last-child { border-bottom: none; }
-    .result-row-best { background: rgba(184,146,46,.07); }
+    .result-row-best {
+      background: rgba(184,146,46,.11);
+      border-left: 3px solid var(--gold);
+      padding-left: 11px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .result-row-best {
+        background: rgba(201,168,76,.13);
+        border-left-color: var(--gold2);
+      }
+    }
     .result-row-ng   { opacity: 0.42; }
 
     .result-row-main {
@@ -1019,8 +1282,29 @@
       margin-bottom: 10px;
     }
 
-    .chip-answered { background: var(--ok-bg);  color: var(--ok); }
-    .chip-pending  { background: var(--no-bg);   color: var(--no); }
+    .chip-answered {
+      background: rgba(26,158,117,.14);
+      color: var(--ok);
+      border: 1px solid rgba(26,158,117,.3);
+      font-weight: 600;
+    }
+    .chip-pending {
+      background: rgba(201,48,68,.1);
+      color: var(--no);
+      border: 1px solid rgba(201,48,68,.25);
+      font-weight: 600;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .chip-answered {
+        background: rgba(45,212,160,.13);
+        border-color: rgba(45,212,160,.3);
+      }
+      .chip-pending {
+        background: rgba(240,92,110,.1);
+        border-color: rgba(240,92,110,.25);
+      }
+    }
 
     .member-status-chip {
       display: inline-flex;
@@ -1033,12 +1317,19 @@
     /* ===== OPTIMAL CARD ===== */
     .optimal-card {
       background: var(--bg2);
-      border: 1px solid var(--border-gold);
+      border: 1.5px solid var(--gold2);
       border-radius: var(--radius);
       padding: 24px;
       text-align: center;
-      box-shadow: var(--shadow-card);
+      box-shadow: var(--shadow-card), 0 0 0 1px rgba(184,146,46,0.06);
       margin-bottom: 14px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .optimal-card {
+        border-color: rgba(201,168,76,0.4);
+        box-shadow: var(--shadow-card), 0 0 20px rgba(201,168,76,0.08);
+      }
     }
 
     .optimal-eyebrow {
@@ -1073,14 +1364,25 @@
     }
 
     .confirmed-banner {
-      background: var(--ok-bg);
-      border: 1px solid rgba(26,158,117,.3);
+      background: linear-gradient(135deg, rgba(26,158,117,.18) 0%, rgba(26,158,117,.07) 100%);
+      border: 1.5px solid rgba(26,158,117,.45);
       border-radius: var(--radius);
-      padding: 14px 16px;
+      padding: 16px;
       text-align: center;
       font-weight: 700;
+      font-size: 15px;
       color: var(--ok);
       margin-bottom: 12px;
+      box-shadow: 0 0 16px rgba(26,158,117,.12);
+      letter-spacing: 0.02em;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .confirmed-banner {
+        background: linear-gradient(135deg, rgba(45,212,160,.16) 0%, rgba(45,212,160,.06) 100%);
+        border-color: rgba(45,212,160,.4);
+        box-shadow: 0 0 20px rgba(45,212,160,.14);
+      }
     }
 
     /* ===== CHART ===== */
@@ -1134,19 +1436,6 @@
     }
 
     /* ===== ADMIN / PRIORITY ===== */
-    .section-label {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--text3);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-      margin-top: 20px;
-    }
-
-    .section-label:first-child { margin-top: 0; }
-
     .priority-card {
       background: var(--bg2);
       border: 1px solid var(--border);
@@ -1189,16 +1478,28 @@
 
     .priority-select {
       background: var(--bg3);
-      border: 1px solid var(--border);
+      border: 1.5px solid var(--border);
       border-radius: var(--radius-sm);
       color: var(--text);
       font-size: 13px;
       font-family: 'Noto Sans JP', sans-serif;
-      padding: 6px 8px;
+      padding: 7px 10px;
       outline: none;
       -webkit-appearance: none;
       cursor: pointer;
       flex-shrink: 0;
+      transition: border-color 0.15s;
+    }
+
+    .priority-select:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(184,146,46,0.12);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .priority-select:focus {
+        box-shadow: 0 0 0 3px rgba(201,168,76,0.16);
+      }
     }
 
     .danger-btn {
@@ -1277,7 +1578,7 @@
       font-size: 56px;
       color: var(--gold);
       letter-spacing: -0.02em;
-      animation: obLogoIn 0.8s ease-out both;
+      animation: obBounceIn 0.9s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
     }
 
     .ob-splash-tagline {
@@ -1285,7 +1586,7 @@
       color: var(--text3);
       letter-spacing: 0.06em;
       margin-top: 14px;
-      animation: obFadeIn 1.2s 0.4s ease-out both;
+      animation: obFadeUp 0.7s 0.5s ease-out both;
     }
 
     @keyframes obLogoIn {
@@ -1293,9 +1594,38 @@
       to   { opacity: 1; transform: scale(1); }
     }
 
+    @keyframes obBounceIn {
+      0%   { opacity: 0; transform: scale(0.55); }
+      55%  { opacity: 1; transform: scale(1.1); }
+      75%  { transform: scale(0.94); }
+      90%  { transform: scale(1.03); }
+      100% { transform: scale(1); }
+    }
+
     @keyframes obFadeIn {
       from { opacity: 0; transform: translateY(8px); }
       to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes obFadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .ob-icon {
+      animation: obBounceIn 0.65s ease-out both;
+    }
+
+    .ob-title {
+      animation: obFadeUp 0.5s 0.1s ease-out both;
+    }
+
+    .ob-desc {
+      animation: obFadeUp 0.5s 0.2s ease-out both;
+    }
+
+    .ob-start-btn {
+      animation: obFadeUp 0.5s 0.3s ease-out both;
     }
 
     /* slides 1-3 */
@@ -1344,6 +1674,30 @@
     }
 
     .ob-start-btn:active { opacity: 0.85; }
+
+    /* 外部配置の次へ/はじめるボタン */
+    .ob-next-btn {
+      display: block;
+      margin: 0 auto 20px;
+      background: var(--gold);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 14px 48px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: 'Noto Sans JP', sans-serif;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.12s;
+      min-width: 200px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .ob-next-btn:active {
+      opacity: 0.85;
+      transform: scale(0.97);
+    }
 
     /* dots */
     .ob-dots {
@@ -1590,7 +1944,7 @@
 
     /* ===== HOME LINKS (walkthrough / demo) ===== */
     .home-links {
-      margin-top: 36px;
+      margin-top: 20px;
       display: flex;
       align-items: center;
       gap: 2px;
@@ -1688,6 +2042,98 @@
       position: relative !important;
       z-index: 901 !important;
     }
+
+    /* ===== DESIGN SYSTEM ADDITIONS ===== */
+
+    /* カード上端ゴールドライン（ダークモード用） */
+    @media (prefers-color-scheme: dark) {
+      .card-gold {
+        position: relative;
+        overflow: hidden;
+      }
+      .card-gold::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(201,168,76,.35), transparent);
+        pointer-events: none;
+      }
+    }
+
+    /* セクションラベル */
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text3);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      margin-top: 20px;
+    }
+    .section-label:first-child { margin-top: 0; }
+    .section-label::before {
+      content: '';
+      display: block;
+      width: 2px;
+      height: 12px;
+      background: var(--gold);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    /* メニューカード */
+    .menu-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 16px;
+      cursor: pointer;
+      box-shadow: var(--shadow-card);
+      transition: transform .15s, border-color .15s;
+      width: 100%;
+      text-align: left;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    .menu-card:active { transform: scale(0.97); }
+    .menu-card-icon { font-size: 24px; flex-shrink: 0; width: 32px; text-align: center; }
+    .menu-card-body { flex: 1; min-width: 0; }
+    .menu-card-label { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+    .menu-card-desc { font-size: 12px; color: var(--text2); }
+    .menu-card-arrow { color: var(--text3); font-size: 18px; flex-shrink: 0; }
+
+    /* シマーアニメーション（優先度保存ボタン用） */
+    @keyframes shimmerMove {
+      0%   { transform: translateX(-100%); }
+      60%  { transform: translateX(100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    .btn-shimmer {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-shimmer::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 60%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+      animation: shimmerMove 2.8s ease-in-out infinite;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -1721,29 +2167,62 @@
 
   <!-- ===== SCREEN: home ===== -->
   <div id="screen-home" class="screen active">
+    <!-- 背景エフェクト -->
+    <div class="home-bg-glow"></div>
+    <div class="home-bg-grid"></div>
+
     <div class="home-inner">
-      <div class="home-logo">にちかん</div>
-      <div class="home-tagline">日程調整を、かしこく。</div>
-      <div class="role-grid">
-        <button class="role-btn" id="btn-to-host">
+      <!-- 左カラム：ヒーロー -->
+      <div class="home-hero">
+        <div class="home-logo">にちかん</div>
+        <div class="home-tagline">日程調整を、かしこく。</div>
+        <!-- スマホ用グロードット -->
+        <div class="home-glow-dots">
+          <div class="home-glow-dot"></div>
+          <div class="home-glow-dot active"></div>
+          <div class="home-glow-dot"></div>
+        </div>
+        <!-- PC用機能説明 -->
+        <ul class="home-features-list">
+          <li>候補日を選んでIDを発行・チームに共有</li>
+          <li>参加者は6文字のIDで○△×回答</li>
+          <li>優先度設定で最適日を自動スコアリング</li>
+          <li>日程確定・テキストコピーで周知まで完結</li>
+        </ul>
+        <div class="home-links">
+          <button type="button" id="btn-walkthrough" class="home-link-btn">使い方を見る</button>
+          <span class="home-link-sep">・</span>
+          <button type="button" id="btn-load-demo" class="home-link-btn">デモを読み込む</button>
+        </div>
+      </div>
+
+      <!-- 右カラム：役割カード -->
+      <div class="home-cards">
+        <button class="role-btn role-btn-host" id="btn-to-host">
           <span class="role-icon">&#128197;</span>
           <div>
             <div class="role-label">主催者</div>
             <div class="role-desc">イベントを作成・管理する</div>
+            <div class="role-features">
+              <span class="role-feature-tag">作成</span>
+              <span class="role-feature-tag">優先度設定</span>
+              <span class="role-feature-tag">日程確定</span>
+              <span class="role-feature-tag">一覧</span>
+            </div>
           </div>
         </button>
-        <button class="role-btn" id="btn-to-guest">
+        <button class="role-btn role-btn-guest" id="btn-to-guest">
           <span class="role-icon">&#128075;</span>
           <div>
             <div class="role-label">参加者</div>
             <div class="role-desc">日程に回答・集計を確認する</div>
+            <div class="role-features">
+              <span class="role-feature-tag">&#9675;&#9651;&#215;回答</span>
+              <span class="role-feature-tag">集計確認</span>
+              <span class="role-feature-tag">コメント</span>
+            </div>
           </div>
         </button>
-      </div>
-      <div class="home-links">
-        <button type="button" id="btn-walkthrough" class="home-link-btn">使い方を見る</button>
-        <span class="home-link-sep">・</span>
-        <button type="button" id="btn-load-demo" class="home-link-btn">デモを読み込む</button>
       </div>
     </div>
   </div>
@@ -1756,8 +2235,8 @@
       <span class="header-title">主催者</span>
     </div>
     <div class="menu-list">
-      <div class="menu-section-title">イベント管理</div>
-      <button class="menu-card" id="btn-to-create">
+      <div class="section-label">イベント管理</div>
+      <button class="menu-card card-gold" id="btn-to-create">
         <span class="menu-card-icon">&#9999;&#65039;</span>
         <div class="menu-card-body">
           <div class="menu-card-label">イベントを作成</div>
@@ -1765,7 +2244,7 @@
         </div>
         <span class="menu-card-arrow">&#8250;</span>
       </button>
-      <button class="menu-card" id="btn-to-event-list">
+      <button class="menu-card card-gold" id="btn-to-event-list">
         <span class="menu-card-icon">&#128203;</span>
         <div class="menu-card-body">
           <div class="menu-card-label">作成済みイベント一覧</div>
@@ -1773,8 +2252,8 @@
         </div>
         <span class="menu-card-arrow">&#8250;</span>
       </button>
-      <div class="menu-section-title" style="margin-top:8px;">確認・集計</div>
-      <button class="menu-card" id="btn-to-result-from-host">
+      <div class="section-label">確認・集計</div>
+      <button class="menu-card card-gold" id="btn-to-result-from-host">
         <span class="menu-card-icon">&#128202;</span>
         <div class="menu-card-body">
           <div class="menu-card-label">集計を確認</div>
@@ -1782,7 +2261,7 @@
         </div>
         <span class="menu-card-arrow">&#8250;</span>
       </button>
-      <button class="menu-card" id="btn-to-admin-entry">
+      <button class="menu-card card-gold" id="btn-to-admin-entry">
         <span class="menu-card-icon">&#9881;&#65039;</span>
         <div class="menu-card-body">
           <div class="menu-card-label">イベントを管理</div>
@@ -1801,8 +2280,8 @@
       <span class="header-title">参加者</span>
     </div>
     <div class="menu-list">
-      <div class="menu-section-title">回答・確認</div>
-      <button class="menu-card" id="btn-to-join">
+      <div class="section-label">回答・確認</div>
+      <button class="menu-card card-gold" id="btn-to-join">
         <span class="menu-card-icon">&#9989;</span>
         <div class="menu-card-body">
           <div class="menu-card-label">日程に回答する</div>
@@ -1810,7 +2289,7 @@
         </div>
         <span class="menu-card-arrow">&#8250;</span>
       </button>
-      <button class="menu-card" id="btn-to-result-from-guest">
+      <button class="menu-card card-gold" id="btn-to-result-from-guest">
         <span class="menu-card-icon">&#128202;</span>
         <div class="menu-card-body">
           <div class="menu-card-label">集計を確認</div>
@@ -1952,8 +2431,7 @@
         <label class="form-label" for="result-id">イベントID</label>
         <input type="text" id="result-id" class="form-input" maxlength="6"
           placeholder="6文字のIDを入力"
-          autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"
-          style="text-transform:uppercase;letter-spacing:0.18em;font-family:'JetBrains Mono',monospace;font-size:22px;text-align:center;">
+          autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
       </div>
       <button type="button" id="btn-result-entry-submit" class="primary-btn">集計を見る</button>
     </div>
@@ -1999,8 +2477,7 @@
         <label class="form-label" for="admin-id">イベントID</label>
         <input type="text" id="admin-id" class="form-input" maxlength="6"
           placeholder="6文字のIDを入力"
-          autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"
-          style="text-transform:uppercase;letter-spacing:0.18em;font-family:'JetBrains Mono',monospace;font-size:22px;text-align:center;">
+          autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
       </div>
       <button type="button" id="btn-admin-entry-submit" class="primary-btn">管理画面へ</button>
     </div>
@@ -3358,7 +3835,7 @@
 
       var saveBtn = document.createElement('button');
       saveBtn.type = 'button';
-      saveBtn.className = 'primary-btn';
+      saveBtn.className = 'primary-btn btn-shimmer';
       saveBtn.textContent = '優先度を保存する';
       saveBtn.addEventListener('click', function() { saveAdminPriorities(data, prioCard, null); });
       container.appendChild(saveBtn);
@@ -3417,7 +3894,7 @@
 
       var saveBtn = document.createElement('button');
       saveBtn.type = 'button';
-      saveBtn.className = 'primary-btn';
+      saveBtn.className = 'primary-btn btn-shimmer';
       saveBtn.textContent = '優先度を保存する';
       saveBtn.addEventListener('click', function() {
         saveAdminPriorities(data, prioCard, function() {
@@ -3549,53 +4026,61 @@
       var d1dates = [addDays(7), addDays(8), addDays(14), addDays(15)];
       var demo1 = {
         id: 'NCHKN2',
-        name: 'チーム納会',
-        memo: '今年もお疲れ様でした！場所はいつもの居酒屋を予定。',
+        name: 'チーム納会 🍺',
+        memo: '今年もお疲れ様でした！場所はいつもの居酒屋「炭火亭」を予定。予算は3000円前後。',
         dates: d1dates,
-        members: ['田中', '佐藤', '鈴木'],
+        members: ['田中', '佐藤', '鈴木', '高橋'],
         deadline: addDays(5),
         createdAt: Date.now() - 86400000,
-        priorities: { '田中': 'required', '佐藤': 'important', '鈴木': 'normal' },
+        confirmed: d1dates[2],
+        priorities: { '田中': 'required', '佐藤': 'important', '鈴木': 'normal', '高橋': 'important' },
         answers: {
-          '田中': { name: '田中', comment: 'よろしくお願いします', answeredAt: Date.now() - 3600000, answers: {} },
-          '佐藤': { name: '佐藤', comment: '', answeredAt: Date.now() - 7200000, answers: {} },
-          '鈴木': { name: '鈴木', comment: 'どこでもOKです！', answeredAt: Date.now() - 10800000, answers: {} }
+          '田中': { name: '田中', comment: '14日以降であれば参加できます！よろしくお願いします。', answeredAt: Date.now() - 3600000, answers: {} },
+          '佐藤': { name: '佐藤', comment: '8日は先約があります。ほかはOKです', answeredAt: Date.now() - 7200000, answers: {} },
+          '鈴木': { name: '鈴木', comment: 'どこでもOKです！楽しみにしてます', answeredAt: Date.now() - 10800000, answers: {} },
+          '高橋': { name: '高橋', comment: '14日or15日がありがたいです', answeredAt: Date.now() - 14400000, answers: {} }
         }
       };
-      demo1.answers['田中'].answers[d1dates[0]] = 'ok';
+      demo1.answers['田中'].answers[d1dates[0]] = 'no';
       demo1.answers['田中'].answers[d1dates[1]] = 'no';
       demo1.answers['田中'].answers[d1dates[2]] = 'ok';
-      demo1.answers['田中'].answers[d1dates[3]] = 'maybe';
-      demo1.answers['佐藤'].answers[d1dates[0]] = 'maybe';
-      demo1.answers['佐藤'].answers[d1dates[1]] = 'ok';
+      demo1.answers['田中'].answers[d1dates[3]] = 'ok';
+      demo1.answers['佐藤'].answers[d1dates[0]] = 'ok';
+      demo1.answers['佐藤'].answers[d1dates[1]] = 'no';
       demo1.answers['佐藤'].answers[d1dates[2]] = 'ok';
-      demo1.answers['佐藤'].answers[d1dates[3]] = 'no';
+      demo1.answers['佐藤'].answers[d1dates[3]] = 'maybe';
       demo1.answers['鈴木'].answers[d1dates[0]] = 'ok';
       demo1.answers['鈴木'].answers[d1dates[1]] = 'ok';
-      demo1.answers['鈴木'].answers[d1dates[2]] = 'maybe';
+      demo1.answers['鈴木'].answers[d1dates[2]] = 'ok';
       demo1.answers['鈴木'].answers[d1dates[3]] = 'ok';
+      demo1.answers['高橋'].answers[d1dates[0]] = 'maybe';
+      demo1.answers['高橋'].answers[d1dates[1]] = 'ok';
+      demo1.answers['高橋'].answers[d1dates[2]] = 'ok';
+      demo1.answers['高橋'].answers[d1dates[3]] = 'ok';
 
-      var d2dates = [addDays(10), addDays(11), addDays(17)];
+      var d2dates = [addDays(10), addDays(11), addDays(17), addDays(18)];
       var demo2 = {
         id: 'NCHKN3',
         name: 'プロジェクトキックオフ',
-        memo: '新プロジェクト開始MTG。参加必須です。',
+        memo: '新プロジェクト「NOVA」開始MTG。チーム全員参加必須です。アジェンダは後日共有。',
         dates: d2dates,
         members: ['山田', '伊藤', '渡辺', '中村'],
         deadline: addDays(8),
         createdAt: Date.now() - 172800000,
-        priorities: {},
+        priorities: { '山田': 'required', '伊藤': 'important', '渡辺': 'normal', '中村': 'normal' },
         answers: {
-          '山田': { name: '山田', comment: '', answeredAt: Date.now() - 1800000, answers: {} },
-          '伊藤': { name: '伊藤', comment: '11日は難しいです', answeredAt: Date.now() - 5400000, answers: {} }
+          '山田': { name: '山田', comment: '18日はリモートでも参加可能です', answeredAt: Date.now() - 1800000, answers: {} },
+          '伊藤': { name: '伊藤', comment: '11日は社外MTGが入っています。難しいです', answeredAt: Date.now() - 5400000, answers: {} }
         }
       };
       demo2.answers['山田'].answers[d2dates[0]] = 'ok';
       demo2.answers['山田'].answers[d2dates[1]] = 'ok';
       demo2.answers['山田'].answers[d2dates[2]] = 'maybe';
-      demo2.answers['伊藤'].answers[d2dates[0]] = 'maybe';
+      demo2.answers['山田'].answers[d2dates[3]] = 'ok';
+      demo2.answers['伊藤'].answers[d2dates[0]] = 'ok';
       demo2.answers['伊藤'].answers[d2dates[1]] = 'no';
       demo2.answers['伊藤'].answers[d2dates[2]] = 'ok';
+      demo2.answers['伊藤'].answers[d2dates[3]] = 'maybe';
 
       var localDb = loadDB();
       localDb[demo1.id] = demo1;
@@ -3646,6 +4131,7 @@
         (function(def, idx) {
           var slide = document.createElement('div');
           slide.className = 'ob-slide';
+          slide.style.cursor = 'pointer';
 
           var icon = document.createElement('div');
           icon.className = 'ob-icon';
@@ -3667,14 +4153,11 @@
           desc.textContent = def.desc;
           slide.appendChild(desc);
 
-          if (idx === 2) {
-            var startBtn = document.createElement('button');
-            startBtn.type = 'button';
-            startBtn.className = 'ob-start-btn';
-            startBtn.textContent = 'はじめる';
-            startBtn.addEventListener('click', finishOnboarding);
-            slide.appendChild(startBtn);
-          }
+          /* タップ/クリックで次へ進む */
+          slide.addEventListener('click', function() {
+            if (obIndex < 3) { obGoTo(obIndex + 1); }
+            else { finishOnboarding(); }
+          });
 
           slider.appendChild(slide);
         })(slideDefs[i], i);
@@ -3694,6 +4177,20 @@
       });
 
       ob.appendChild(wrap);
+
+      /* 次へ/はじめるボタン（スライダーとドットの間） */
+      var nextBtn = document.createElement('button');
+      nextBtn.id = 'ob-next-btn';
+      nextBtn.type = 'button';
+      nextBtn.className = 'ob-next-btn';
+      nextBtn.textContent = '次へ →';
+      nextBtn.style.visibility = 'hidden';
+      nextBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (obIndex < 3) { obGoTo(obIndex + 1); }
+        else { finishOnboarding(); }
+      });
+      ob.appendChild(nextBtn);
 
       /* dots (3 dots for slides 1-3) */
       var dotsEl = document.createElement('div');
@@ -3726,19 +4223,36 @@
       }, 2000);
     }
 
+    function obResetAnim(slideEl) {
+      var targets = ['ob-icon', 'ob-title', 'ob-desc'];
+      for (var t = 0; t < targets.length; t++) {
+        var els = slideEl.getElementsByClassName(targets[t]);
+        for (var e = 0; e < els.length; e++) {
+          els[e].style.animation = 'none';
+          els[e].offsetHeight;
+          els[e].style.animation = '';
+        }
+      }
+    }
+
     function obGoTo(idx) {
       obIndex = idx;
       var slider = document.getElementById('ob-slider');
       if (slider) {
         slider.style.transform = 'translateX(' + (-idx * 100) + '%)';
+        var slides = slider.getElementsByClassName('ob-slide');
+        if (slides[idx]) { obResetAnim(slides[idx]); }
       }
 
       var dotsEl = document.getElementById('ob-dots');
       var skipBtn = document.getElementById('ob-skip');
 
+      var nextBtnEl = document.getElementById('ob-next-btn');
+
       if (idx === 0) {
         if (dotsEl) { dotsEl.style.visibility = 'hidden'; }
         if (skipBtn) { skipBtn.style.visibility = 'hidden'; }
+        if (nextBtnEl) { nextBtnEl.style.visibility = 'hidden'; }
       } else {
         if (dotsEl) {
           dotsEl.style.visibility = 'visible';
@@ -3750,6 +4264,10 @@
         }
         if (skipBtn) {
           skipBtn.style.visibility = (idx < 3) ? 'visible' : 'hidden';
+        }
+        if (nextBtnEl) {
+          nextBtnEl.style.visibility = 'visible';
+          nextBtnEl.textContent = (idx < 3) ? '次へ →' : 'はじめる';
         }
       }
     }
@@ -3916,7 +4434,14 @@
         else if (choice === 'no' && prio === 'required') { reqFailNames.push(aObj.name || aKey); }
 
         totalScore += pts;
-        if (pts > 0) { formulaParts.push(pts + 'pt'); }
+        var choiceSym = (choice === 'ok') ? '○' : (choice === 'maybe' ? '△' : '×');
+        var prioSuffix = (prio === 'important') ? '×重要' : (prio === 'required' ? ' 必須' : '');
+        var displayName = aObj.name || aKey;
+        if (pts > 0) {
+          formulaParts.push(displayName + '(+' + pts + ' ' + choiceSym + prioSuffix + ')');
+        } else if (choice === 'no') {
+          formulaParts.push(displayName + '(0 ×)');
+        }
 
         var row = document.createElement('div');
         row.className = 'score-row';
